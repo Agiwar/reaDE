@@ -1,0 +1,141 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+.pyvenv3.13/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# IDEs
+# .vscode/ contains personal settings (shared config at Projects/.vscode/)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.benchmarks/
+
+# Type checking & Linting
+.mypy_cache/
+.dmypy.json
+dmyp.json
+.pyre/
+.pytype/
+.ruff_cache/
+.sourcery/
+
+# AI Tools (personal, not part of project)
+.sourcery.yaml
+*_AI_TOOLS.md
+SOURCERY_*.md
+INTEGRATION_GUIDE.md
+
+# Personal helper scripts (not part of SDK)
+h
+scripts/
+.reports/
+
+# Claude Code local settings
+.claude/
+
+# Personal workflow documentation
+docs/sourcery-claude-workflow.md
+
+# Personal knowledge sharing & learning notes (not for repo)
+PROTOCOL_VS_ABC.md
+DEPENDENCY_STATUS.md
+DEV_ENVIRONMENT.md
+DEV_GUIDE_v0.1.0.md
+GETTING_STARTED.md
+RESTRUCTURE_SUMMARY.md
+*_NOTES.md
+*_KNOWLEDGE.md
+*_GUIDE*.md
+*_SUMMARY*.md
+
+# Jupyter
+.ipynb_checkpoints
+
+# Distribution
+*.whl
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
+
+# Environment variables
+.env.local
+.env.*.local
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Documentation
+docs/_build/
+site/
+
+# Temporary files
+*.tmp
+*.bak
+.cache/
+
+# uv specific
+uv.lock
+
+# Legacy requirements files (using pyproject.toml instead)
+requirements.txt
+requirements-*.txt
+
+# Rust (for future Rust extensions)
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
