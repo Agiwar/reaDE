@@ -157,8 +157,8 @@ select = [
     "UP", # pyupgrade - modern Python syntax
 
     # Type annotations & safety
-    "ANN", # flake8-annotations - enforce type hints
-    "TC",  # flake8-type-checking, new prefix
+    "ANN",  # flake8-annotations - enforce type hints
+    "TCH",  # flake8-type-checking
 
     # Async & concurrency
     "ASYNC", # flake8-async
@@ -292,7 +292,7 @@ incremental = true
 cache_dir = ".mypy_cache"
 
 # Plugins for common libraries
-plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+plugins = ["pydantic.mypy"]
 
 # Per-module overrides for untyped third-party libraries
 [[tool.mypy.overrides]]
@@ -386,7 +386,6 @@ tests = [
     "B321", # FTP usage
     "B323", # Unverified SSL context
     "B324", # hashlib insecure hash functions
-    "B325", # tempfile usage
     "B401", # import_telnetlib
     "B402", # import_ftplib
     "B403", # import_pickle
