@@ -25,7 +25,7 @@ MANIFEST
 # Virtual environments
 .env
 .venv
-.pyvenv3.13/
+.pyvenv*/
 env/
 venv/
 ENV/

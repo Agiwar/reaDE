@@ -1,81 +1,57 @@
 [project]
 name = "reade"
 version = "0.1.0"
-description = "A comprehensive Data Engineering SDK for ETL pipelines, data replication, transformation, and database integration with enterprise-grade orchestration"
+description = "A data engineering SDK providing unified interfaces for database connections, config loading, and validation - eliminating boilerplate"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Jeffrey Li", email = "jeffrey@example.com" }]
-maintainers = [{ name = "Jeffrey Li", email = "jeffrey@example.com" }]
+authors = [{ name = "Jeffrey Li", email = "agiwar791005@gmail.com" }]
+maintainers = [{ name = "Jeffrey Li", email = "agiwar791005@gmail.com" }]
 keywords = [
     "data-engineering",
-    "etl",
-    "data-pipeline",
-    "orchestration",
-    "replication",
-    "cdc",
-    "debezium",
-    "spark",
-    "dbt",
-    "workflow",
+    "data-tools",
     "database-connectors",
-    "data-transformation",
+    "sql",
+    "python-sdk",
+    "configuration-management",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Rust",
     "Topic :: Database",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: System :: Distributed Computing",
 ]
 
 dependencies = [
     # Core data processing
     "pandas>=2.0.0",
-    "polars>=0.20.0",  # High-performance DataFrame library (Rust-based)
+    "polars>=0.20.0",
     "pyarrow>=14.0.0",
 
     # Database connectors
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",    # PostgreSQL
     "pymysql>=1.1.0",            # MySQL
-    "cx-oracle>=8.3.0",          # Oracle
-    "trino>=0.328.0",            # Trino
-    "ibm-db>=3.2.0",             # IBM DB2
-    "clickhouse-connect>=0.6.0", # ClickHouse
 
     # Configuration & validation
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
-    "toml>=0.10.2",
 
     # Template engine
     "jinja2>=3.1.0",
 
-    # Workflow orchestration
-    "prefect>=2.14.0",
-
-    # API framework
-    "fastapi>=0.104.0",
-    "uvicorn[standard]>=0.24.0",
-
-    # Logging & monitoring
+    # Logging
     "structlog>=23.2.0",
-    "rich>=13.7.0",
 
     # Utilities
-    "click>=8.1.0",
-    "httpx>=0.25.0",
     "python-dateutil>=2.8.0",
 ]
 
@@ -92,7 +68,7 @@ dev = [
     "hypothesis>=6.92.0",      # Property-based testing
 
     # Linting & formatting
-    "ruff>=0.1.8",
+    "ruff>=0.6.0",
     "mypy>=1.7.0",
     "bandit[toml]>=1.7.5",
     "sqlfluff>=3.0.0",
@@ -129,18 +105,16 @@ dev = [
     "twine>=4.0.0",
 ]
 
-spark = ["pyspark>=3.5.0"]
+# MVP analytics engine (pick one for now)
+trino = ["trino>=0.328.0"]
 
-dbt = ["dbt-core>=1.7.0", "dbt-postgres>=1.7.0"]
-
-snowflake = ["snowflake-connector-python>=3.6.0", "snowflake-sqlalchemy>=1.5.0"]
-
-rust = [
-    # Rust extensions (future: use maturin or PyO3)
-    "maturin>=1.4.0",
-]
-
-all = ["reade[dev,spark,dbt,snowflake,rust]"]
+# Future connectors (uncomment when implemented)
+# oracle = ["cx-oracle>=8.3.0"]
+# db2 = ["ibm-db>=3.2.0"]
+# clickhouse = ["clickhouse-connect>=0.6.0"]
+# snowflake = ["snowflake-connector-python>=3.6.0", "snowflake-sqlalchemy>=1.5.0"]
+# spark = ["pyspark>=3.5.0"]
+# dbt = ["dbt-core>=1.7.0", "dbt-postgres>=1.7.0"]
 
 [project.urls]
 Homepage = "https://github.com/Agiwar/reaDE"
@@ -166,7 +140,7 @@ include = ["src/reade"]
 
 # ==================== RUFF CONFIGURATION ====================
 [tool.ruff]
-target-version = "py312"  # ruff doesn't support py313 yet
+target-version = "py310"
 line-length = 88
 indent-width = 4
 src = ["src", "tests"]
@@ -184,7 +158,7 @@ select = [
 
     # Type annotations & safety
     "ANN", # flake8-annotations - enforce type hints
-    "TCH", # flake8-type-checking - optimize TYPE_CHECKING imports
+    "TC",  # flake8-type-checking, new prefix
 
     # Async & concurrency
     "ASYNC", # flake8-async
@@ -194,41 +168,41 @@ select = [
 
     # Code quality & bugs
     "B",   # flake8-bugbear
-    "A",   # flake8-builtins - avoid shadowing builtins
+    "A",   # flake8-builtins
     "C4",  # flake8-comprehensions
     "T10", # flake8-debugger
     "ISC", # flake8-implicit-str-concat
-    "PIE", # flake8-pie - misc lints
-    "T20", # flake8-print - no print statements
+    "PIE", # flake8-pie
+    "T20", # flake8-print
     "PT",  # flake8-pytest-style
     "Q",   # flake8-quotes
     "RET", # flake8-return
     "SIM", # flake8-simplify
     "ARG", # flake8-unused-arguments
-    "PTH", # flake8-use-pathlib - modern path handling
+    "PTH", # flake8-use-pathlib
 
     # Complexity & maintainability
     "PL",  # pylint
-    "C90", # mccabe - complexity checking
+    "C90", # mccabe
 
     # Error handling
     "TRY", # tryceratops
-    "EM",  # flake8-errmsg - error message formatting
+    "EM",  # flake8-errmsg
 
     # Performance
-    "PERF", # perflint - performance anti-patterns
-    "FURB", # refurb - modernize Python code
+    "PERF", # perflint
+    "FURB", # refurb
 
     # Documentation & logging
     "G",   # flake8-logging-format
-    "LOG", # flake8-logging - proper logging usage
+    "LOG", # flake8-logging
 
     # Data engineering specific
-    "PD",  # pandas-vet - pandas anti-patterns
-    "NPY", # numpy-specific rules
+    "PD",  # pandas-vet
+    "NPY", # numpy
 
     # Import management
-    "TID", # flake8-tidy-imports - banned imports
+    "TID", # flake8-tidy-imports
 
     # Ruff-specific
     "RUF", # ruff-specific rules
@@ -282,7 +256,7 @@ docstring-code-format = true
 
 # ==================== MYPY CONFIGURATION ====================
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.10"
 
 # Strict mode (equivalent to --strict)
 warn_return_any = true
@@ -323,12 +297,12 @@ plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 # Per-module overrides for untyped third-party libraries
 [[tool.mypy.overrides]]
 module = [
+    "polars.*",
+    # Optional db connectors (when installed)
     "cx_oracle.*",
     "trino.*",
-    "prefect.*",
     "ibm_db.*",
     "clickhouse_connect.*",
-    "polars.*",
 ]
 ignore_missing_imports = true
 
@@ -452,7 +426,7 @@ tests = [
 [tool.sqlfluff.core]
 dialect = "postgres"
 templater = "jinja"
-max_line_length = 100
+max_line_length = 88
 
 [tool.sqlfluff.indentation]
 indent_unit = "space"
@@ -478,7 +452,7 @@ fail-under = 95.0
 exclude = ["setup.py", "docs", "build", "tests"]
 ignore-regex = ["^get$", "^post$", "^put$", "^delete$"]
 ext = []
-style = "sphinx"
+style = "google"
 verbose = 1
 quiet = false
 whitelist-regex = []
@@ -514,9 +488,3 @@ min_confidence = 80
 paths = ["src"]
 sort_by_size = true
 verbose = false
-
-# ==================== ADDITIONAL PYTEST PLUGINS ====================
-[tool.pytest.ini_options.benchmark]
-# Benchmark configuration for pytest-benchmark
-disable_gc = false
-warmup = false

@@ -26,20 +26,34 @@ When assisting with this project, Claude should:
 
 ## Project Context
 
-- **Type**: Python SDK for data engineering (ETL, replication, transformations)
-- **Architecture**: Interface → Implementation → Factory → Utils pattern
-- **Python Version**: 3.13+
+- **Type**: Python SDK providing unified interfaces for DB connections, config loading, and validation
+- **Purpose**: Eliminate boilerplate that every DE rewrites (DRY principle)
+- **Architecture**: Interface (Protocol) → Implementation → Factory → Utils pattern
+- **Python Version**: 3.10+ (target 3.10 for tooling)
 - **Package Manager**: uv (not pip)
-- **Linting/Formatting**: Ruff (replaces black, isort, flake8)
+- **Linting/Formatting**: Ruff 0.6+ (replaces black, isort, flake8)
 - **Type Checking**: Mypy with strict mode
 - **Testing**: Pytest with coverage
 - **Docstring Style**: Google-style
+
+## MVP Scope
+
+- **Core DBs**: PostgreSQL, MySQL, SQLite (zero-setup for tests)
+- **Optional**: Trino (analytics engine)
+- **Not in MVP**: Oracle, DB2, ClickHouse, Snowflake, Spark, dbt, orchestration
 
 ## Git Conventions
 
 - **Branch Prefixes**: `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`, `test/`, `ci/`
 - **Commit Style**: Conventional Commits (`type: description`)
 - **Workflow**: main ← feature branches (no dev/release branches for solo project)
+- **Author Identity**: Jeffrey <agiwar791005@gmail.com> (real name and email)
+- **Commit Signing**: SSH signing enabled for verified commits on GitHub
+- **Commit Messages**:
+  - Do NOT add "Generated with Claude Code" or "Co-Authored-By: Claude" footers
+  - Keep messages clean and concise (industry standard)
+  - Include high-level summary of what/why changed
+  - Avoid excessive detail (no file listings, known patterns, obvious implementation details)
 
 ## Code Standards
 

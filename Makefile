@@ -33,8 +33,7 @@ help: ## Show this help message
 	@echo "$(YELLOW)All Commands:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 
-h: ## Shortcut for help
-	@./scripts/help.sh
+h: help ## Shortcut for help
 
 install: ## Install the package using uv
 	@echo "$(BLUE)Installing package...$(NC)"
