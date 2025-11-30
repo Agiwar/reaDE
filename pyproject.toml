@@ -158,8 +158,8 @@ select = [
 
     # Type annotations & safety
     "ANN",  # flake8-annotations - enforce type hints
-    "TCH",  # flake8-type-checking
 
+    "TC",   # flake8-type-checking
     # Async & concurrency
     "ASYNC", # flake8-async
 
