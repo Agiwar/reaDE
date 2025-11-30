@@ -323,10 +323,6 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--showlocals",
-    "--cov=src",
-    "--cov-report=term-missing:skip-covered",
-    "--cov-report=html",
-    "--cov-report=xml",
 ]
 markers = [
     "unit: Unit tests",
@@ -335,23 +331,24 @@ markers = [
     "db: Tests requiring database connection",
 ]
 
-[tool.coverage.run]
-source = ["src"]
-branch = true
-omit = ["*/tests/*", "*/__init__.py", "*/examples/*"]
+# Coverage config (run manually with: pytest --cov=src --cov-report=term-missing)
+# [tool.coverage.run]
+# source = ["src"]
+# branch = true
+# omit = ["*/tests/*", "*/__init__.py", "*/examples/*"]
 
-[tool.coverage.report]
-precision = 2
-show_missing = true
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "@abstractmethod",
-]
+# [tool.coverage.report]
+# precision = 2
+# show_missing = true
+# exclude_lines = [
+#     "pragma: no cover",
+#     "def __repr__",
+#     "raise AssertionError",
+#     "raise NotImplementedError",
+#     "if __name__ == .__main__.:",
+#     "if TYPE_CHECKING:",
+#     "@abstractmethod",
+# ]
 
 # ==================== BANDIT CONFIGURATION ====================
 [tool.bandit]
