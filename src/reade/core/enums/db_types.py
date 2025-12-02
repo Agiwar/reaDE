@@ -9,4 +9,3 @@ class DBTypes(str, Enum):
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
     SQLITE = "sqlite"
-    TRINO = "trino"

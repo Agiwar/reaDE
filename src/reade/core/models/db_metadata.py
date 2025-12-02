@@ -16,33 +16,26 @@ class DBMetadata:
     uri_scheme: str
 
 
-DB_METADATA_MAP: dict[DBTypes, DBMetadata] = {
+DB_METADATA_REGISTRY: dict[DBTypes, DBMetadata] = {
     DBTypes.POSTGRESQL: DBMetadata(
         db_type=DBTypes.POSTGRESQL,
-        display_name="postgresql",
+        display_name="PostgreSQL",
         default_port=5432,
         default_driver="psycopg2",
         uri_scheme="postgresql+psycopg2",
     ),
     DBTypes.MYSQL: DBMetadata(
         db_type=DBTypes.MYSQL,
-        display_name="mysql",
+        display_name="MySQL",
         default_port=3306,
         default_driver="pymysql",
         uri_scheme="mysql+pymysql",
     ),
     DBTypes.SQLITE: DBMetadata(
         db_type=DBTypes.SQLITE,
-        display_name="sqlite",
+        display_name="SQLite",
         default_port=0,
         default_driver="",
         uri_scheme="sqlite",
-    ),
-    DBTypes.TRINO: DBMetadata(
-        db_type=DBTypes.TRINO,
-        display_name="trino",
-        default_port=8080,
-        default_driver="",
-        uri_scheme="trino",
     ),
 }
