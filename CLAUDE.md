@@ -71,3 +71,11 @@ When assisting with this project, Claude should:
 - Prefer editing existing files over creating new ones
 - Don't add features beyond what's requested
 - Run linting/type checks after changes when relevant
+
+## Learning Notes Command
+
+When user says **"it's new for me"** about a pattern or concept:
+- Add entry to `DE_PATTERNS.md` (gitignored, personal learning file)
+- Format: Problem (Old Way) → Solution (New Way) → Usage → Benefits table
+- Keep it concise with code examples
+- This file syncs across machines via iCloud but not tracked in git
