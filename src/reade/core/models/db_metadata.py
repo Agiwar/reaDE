@@ -11,7 +11,7 @@ class DBMetadata:
 
     db_type: DBTypes
     display_name: str
-    default_port: int
+    default_port: int | None
     default_driver: str
     uri_scheme: str
 
@@ -34,7 +34,7 @@ DB_METADATA_REGISTRY: dict[DBTypes, DBMetadata] = {
     DBTypes.SQLITE: DBMetadata(
         db_type=DBTypes.SQLITE,
         display_name="SQLite",
-        default_port=0,
+        default_port=None,
         default_driver="",
         uri_scheme="sqlite",
     ),
