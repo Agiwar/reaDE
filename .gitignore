@@ -86,10 +86,13 @@ DEV_ENVIRONMENT.md
 DEV_GUIDE_v0.1.0.md
 GETTING_STARTED.md
 RESTRUCTURE_SUMMARY.md
+DE_PATTERNS.md
 *_NOTES.md
 *_KNOWLEDGE.md
 *_GUIDE*.md
 *_SUMMARY*.md
+*_PATTERNS.md
+*_LEARNING.md
 
 # Jupyter
 .ipynb_checkpoints
