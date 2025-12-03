@@ -62,37 +62,12 @@ dmyp.json
 .ruff_cache/
 .sourcery/
 
-# AI Tools (personal, not part of project)
-.sourcery.yaml
-*_AI_TOOLS.md
-SOURCERY_*.md
-INTEGRATION_GUIDE.md
-
-# Personal helper scripts (not part of SDK)
-h
-scripts/
-.reports/
-
 # Claude Code local settings
 .claude/
 
-# Personal workflow documentation
-docs/sourcery-claude-workflow.md
-
-# Personal knowledge sharing & learning notes (not for repo)
-PROTOCOL_VS_ABC.md
-DEPENDENCY_STATUS.md
-DEV_ENVIRONMENT.md
-DEV_GUIDE_v0.1.0.md
-GETTING_STARTED.md
-RESTRUCTURE_SUMMARY.md
-DE_PATTERNS.md
-*_NOTES.md
-*_KNOWLEDGE.md
-*_GUIDE*.md
-*_SUMMARY*.md
-*_PATTERNS.md
-*_LEARNING.md
+# Personal helper scripts
+scripts/
+.reports/
 
 # Jupyter
 .ipynb_checkpoints
