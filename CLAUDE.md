@@ -75,7 +75,7 @@ When assisting with this project, Claude should:
 ## Learning Notes Command
 
 When user says **"it's new for me"** about a pattern or concept:
-- Add entry to `DE_PATTERNS.md` (gitignored, personal learning file)
+- Add entry to Obsidian vault: `/Users/jeffreyli/Library/Mobile Documents/iCloud~md~obsidian/Documents/SecondBrain/reaDE/DE_PATTERNS.md`
 - Format: Problem (Old Way) → Solution (New Way) → Usage → Benefits table
 - Keep it concise with code examples
-- This file syncs across machines via iCloud but not tracked in git
+- Auto-syncs via iCloud to iOS Obsidian (not in git repo)
