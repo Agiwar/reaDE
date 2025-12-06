@@ -1,0 +1,1 @@
+"""Data quality validator protocol."""

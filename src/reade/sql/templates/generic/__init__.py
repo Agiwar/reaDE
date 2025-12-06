@@ -1,0 +1,1 @@
+"""Generic SQL templates."""

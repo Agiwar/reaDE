@@ -1,0 +1,1 @@
+"""Type validation utilities."""
