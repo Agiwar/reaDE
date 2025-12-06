@@ -35,16 +35,15 @@ uv pip install -e ".[dev]"
 ## Quick Start
 
 ```python
-from reade import connect
+from reade.core.enums import DbType
 
-# Connect to PostgreSQL
-with connect("postgresql://user:pass@localhost/db") as conn:
-    results = conn.execute("SELECT * FROM users")
-
-# Same interface for MySQL
-with connect("mysql://user:pass@localhost/db") as conn:
-    results = conn.execute("SELECT * FROM users")
+# Database types available
+print(DbType.POSTGRESQL)  # postgresql
+print(DbType.MYSQL)       # mysql
+print(DbType.SQLITE)      # sqlite
 ```
+
+> **Note**: Connection and query APIs are under development. See [Project Structure](#project-structure) for current modules.
 
 ## MVP Scope
 
@@ -101,12 +100,27 @@ def connect(url: str) -> DbConnector:
 
 ```
 src/reade/
-├── core/           # Interfaces, models, enums, errors
-├── db/             # Database connectors
-├── config/         # Config loading
-├── io/             # File readers/writers
-├── validation/     # Data validation
-└── sql/            # SQL building
+├── core/           # Shared foundation
+│   ├── base/       # ABCs with shared implementation
+│   ├── enums/      # DbType, DqDimension, etc.
+│   ├── errors/     # Exception hierarchy
+│   ├── interfaces/ # Protocol definitions (contracts)
+│   └── models/     # Shared data models
+├── config/         # Config parsing (YAML/JSON/TOML)
+├── db/             # Connection lifecycle, health check
+├── sql/            # Jinja2 SQL template rendering
+├── data_io/        # SQL execution, Kafka, external I/O
+├── validation/     # Schema, type, and rule validation
+│   └── rules/      # Generic rules (count, agg, null, delay)
+└── dq/             # DQ dimension aggregation
+    └── dimensions/ # Volume, timeliness, completeness, accuracy
+```
+
+**Data Flow:**
+```
+config/ → db/ → sql/ → data_io/ → validation/ → dq/
+  │        │      │        │           │          │
+parse   connect  render  execute    validate   aggregate
 ```
 
 ## License
