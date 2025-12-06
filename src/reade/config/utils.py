@@ -1,1 +1,1 @@
-"""Config utilities."""
+"""Configuration utility functions."""

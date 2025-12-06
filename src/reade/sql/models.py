@@ -1,0 +1,1 @@
+"""SQL template data models."""

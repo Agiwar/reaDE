@@ -1,0 +1,1 @@
+"""Aggregation comparison rule."""
