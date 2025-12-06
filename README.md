@@ -6,7 +6,22 @@
 
 ## The Problem
 
-Every data engineer knows they should validate data quality, but it rarely happens consistently:
+**Every DE writes the same boilerplate. Every. Single. Time.**
+
+```python
+# Sound familiar?
+def get_connection(db_type, host, port, ...):  # Written 100 times
+def load_config(path):                          # Copy-pasted everywhere
+def build_connection_string(...):               # Slightly different each time
+```
+
+Then, after shipping the pipeline, DQ never happens because:
+
+- "I'll add validation later" → Never happens
+- "Great Expectations is too complex" → Skipped
+- "No time, deadline tomorrow" → Technical debt
+
+**The reality:**
 
 | What DEs typically do | Problem |
 |----------------------|---------|
@@ -62,6 +77,8 @@ Just high-value primitives.
 | Learn new paradigm | Use what you know |
 
 **reaDE is the DE swiss-army knife with DQ built in.**
+
+**Free, open-source, built by a DE for DEs.**
 
 ## Installation
 
