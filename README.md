@@ -1,32 +1,73 @@
 # reaDE
 
-A Python SDK providing unified interfaces for database connections, config loading, and validation - eliminating boilerplate that every data engineer rewrites.
+**Data Engineering SDK with built-in Data Quality — connect, query, validate.**
+
+> The easiest way to add real data quality checks without adopting a platform.
+
+## The Problem
+
+Every data engineer knows they should validate data quality, but it rarely happens consistently:
+
+| What DEs typically do | Problem |
+|----------------------|---------|
+| Ad-hoc `SELECT COUNT(*)` | No tracking, no alerting |
+| Manual null checks | Inconsistent, forgotten |
+| "I'll check it later" | Never happens |
+| No freshness monitoring | Stale data goes unnoticed |
+| Custom validation scripts | DRY violation, unmaintainable |
+
+**Why DQ gets skipped:**
+
+- **Great Expectations / Soda** = overkill for simple checks (YAML hell, learning curve, setup overhead)
+- **dbt tests** = only works in dbt context
+- **Time pressure** = ship first, validate never
+- **No integrated solution** = DQ feels like "extra work"
+
+## The Solution
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  "I just need to connect, query, and validate"          │
+│                                                         │
+│   Too heavy ←────────────────────────→ Too manual       │
+│   Great Expectations                   Raw SQL scripts  │
+│   Soda                                 Ad-hoc checks    │
+│                                                         │
+│                    reaDE sits here                      │
+│              ↓                                          │
+│         Lightweight, built-in, just works               │
+└─────────────────────────────────────────────────────────┘
+```
+
+**reaDE gives DEs tools they already understand:**
+
+- Connect to databases
+- Render SQL from templates
+- Execute queries
+- Validate with rules
+- Return structured results
+
+No DSL. No YAML factories. No checkpoint configs. No metadata store. No hosted agent. No UI server.
+
+Just high-value primitives.
 
 ## Why reaDE?
 
-Every data engineer writes the same boilerplate:
-- Database connection setup with different drivers
-- Config file loading (YAML, JSON, env)
-- Connection string building
-- Basic validation logic
+| Other Tools | reaDE |
+|-------------|-------|
+| Platform-heavy | SDK-first |
+| Config ceremony | Code-native |
+| Framework ideology | Boring and reliable |
+| DQ bolted on | DQ built in |
+| Learn new paradigm | Use what you know |
 
-**reaDE** provides clean, unified interfaces so you can focus on your actual data work.
-
-## Features
-
-- **Unified DB Interface**: One consistent API for PostgreSQL, MySQL, SQLite (MVP)
-- **Config Loading**: YAML, JSON, and environment variable support
-- **Type-Safe**: Full type hints with strict mypy checking
-- **Modern Python**: Supports Python 3.10+
+**reaDE is the DE swiss-army knife with DQ built in.**
 
 ## Installation
 
 ```bash
 # Using uv (recommended)
 uv pip install reade
-
-# With Trino support
-uv pip install reade[trino]
 
 # Development install
 uv pip install -e ".[dev]"
@@ -60,41 +101,27 @@ print(DbType.SQLITE)      # sqlite
 - Spark, dbt integration
 - Orchestration, CDC, streaming
 
-## Development
+## Architecture
 
-```bash
-# Setup
-uv venv --python 3.10 .pyvenv3.10
-source .pyvenv3.10/bin/activate
-uv pip install -e ".[dev]"
+**reaDE is a Data Engineering SDK that unifies:**
 
-# Commands
-make help          # Show all commands
-make lint          # Run ruff linter
-make type-check    # Run mypy
-make test          # Run tests
-make check-all     # Run all checks
+| Module | Responsibility |
+|--------|---------------|
+| `config/` | Parse YAML/JSON/TOML → typed objects |
+| `db/` | Connection lifecycle, health check |
+| `sql/` | Render Jinja2 templates → SQL strings |
+| `data_io/` | Execute SQL, Kafka, external I/O |
+| `validation/` | Schema, type, and rule validation |
+| `dq/` | DQ dimension aggregation |
+
+**Data Flow:**
+```
+config/ → db/ → sql/ → data_io/ → validation/ → dq/
+  │        │      │        │           │          │
+parse   connect  render  execute    validate   aggregate
 ```
 
-## Design Pattern
-
-**Protocol → Implementation → Factory**
-
-```python
-# Protocol (interface)
-class DbConnector(Protocol):
-    def connect(self) -> None: ...
-    def execute(self, query: str) -> list[dict]: ...
-
-# Implementation
-class PostgresConnector:
-    def connect(self) -> None: ...
-    def execute(self, query: str) -> list[dict]: ...
-
-# Factory
-def connect(url: str) -> DbConnector:
-    ...
-```
+**DQ is powered by the other layers — the synergy is the value.**
 
 ## Project Structure
 
@@ -116,11 +143,20 @@ src/reade/
     └── dimensions/ # Volume, timeliness, completeness, accuracy
 ```
 
-**Data Flow:**
-```
-config/ → db/ → sql/ → data_io/ → validation/ → dq/
-  │        │      │        │           │          │
-parse   connect  render  execute    validate   aggregate
+## Development
+
+```bash
+# Setup
+uv venv --python 3.10 .pyvenv3.10
+source .pyvenv3.10/bin/activate
+uv pip install -e ".[dev]"
+
+# Commands
+make help          # Show all commands
+make lint          # Run ruff linter
+make type-check    # Run mypy
+make test          # Run tests
+make check-all     # Run all checks
 ```
 
 ## License
