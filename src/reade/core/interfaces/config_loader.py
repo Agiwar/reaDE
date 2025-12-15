@@ -22,6 +22,5 @@ class ConfigLoader(Protocol):
 
         Raises:
             FileNotFoundError: If the file does not exist.
-            ConfigParseError: If the file cannot be parsed.
         """
         ...
