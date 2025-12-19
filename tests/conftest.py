@@ -74,3 +74,28 @@ def quoted_csv_file(tmp_config_dir: Path) -> Path:
     file_path = tmp_config_dir / "quoted.csv"
     file_path.write_text('message,"Hello, World"\npath,"/usr/local/bin"\n')
     return file_path
+
+
+# JSON fixtures
+@pytest.fixture
+def valid_json_file(tmp_config_dir: Path) -> Path:
+    """Create a valid JSON config file."""
+    file_path = tmp_config_dir / "valid.json"
+    file_path.write_text('{"database": {"host": "localhost", "port": 5432}}')
+    return file_path
+
+
+@pytest.fixture
+def empty_json_file(tmp_config_dir: Path) -> Path:
+    """Create an empty JSON file."""
+    file_path = tmp_config_dir / "empty.json"
+    file_path.write_text("")
+    return file_path
+
+
+@pytest.fixture
+def invalid_json_file(tmp_config_dir: Path) -> Path:
+    """Create an invalid JSON file."""
+    file_path = tmp_config_dir / "invalid.json"
+    file_path.write_text('{"unclosed": "brace"')
+    return file_path
