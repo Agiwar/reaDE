@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from reade.core.enums.db_types import DbType
+from reade.core.enums.db_type import DbType
 
 
 @dataclass(frozen=True)
@@ -27,21 +27,21 @@ class DbMetadata:
 DB_METADATA_REGISTRY: dict[DbType, DbMetadata] = {
     DbType.SQLITE: DbMetadata(
         db_type=DbType.SQLITE,
-        display_name="SQLite",
+        display_name=DbType.SQLITE.value,
         default_port=None,
         default_driver="sqlite3",
         uri_scheme="sqlite",
     ),
     DbType.MYSQL: DbMetadata(
         db_type=DbType.MYSQL,
-        display_name="MySQL",
+        display_name=DbType.MYSQL.value,
         default_port=3306,
         default_driver="pymysql",
         uri_scheme="mysql+pymysql",
     ),
     DbType.POSTGRESQL: DbMetadata(
         db_type=DbType.POSTGRESQL,
-        display_name="PostgreSQL",
+        display_name=DbType.POSTGRESQL.value,
         default_port=5432,
         default_driver="psycopg2",
         uri_scheme="postgresql+psycopg2",
