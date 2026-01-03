@@ -34,8 +34,8 @@ When assisting with this project, Claude should:
 
 - **Type**: Python SDK providing unified interfaces for DB connections, config loading, and validation
 - **Purpose**: Eliminate boilerplate that every DE rewrites (DRY principle)
-- **Architecture**: Interface (Protocol) → Implementation → Factory → Utils pattern
-- **Python Version**: 3.10+ (target 3.10 for tooling)
+- **Architecture**: Interface (Protocol) → Base (ABC) → Implementation → Factory pattern
+- **Python Version**: 3.12+
 - **Package Manager**: uv (not pip)
 - **Linting/Formatting**: Ruff 0.6+ (replaces black, isort, flake8)
 - **Type Checking**: Mypy with strict mode

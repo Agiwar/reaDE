@@ -3,12 +3,12 @@ name = "reade"
 version = "0.1.0"
 description = "Lightweight data-engineering toolkit (MVP: core DB types)."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [{ name = "Jeffrey Li", email = "agiwar791005@gmail.com" }]
 keywords = ["data-engineering", "python-foundation", "de-sdk"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
 ]
 
 dependencies = [
@@ -50,7 +50,7 @@ include = ["src/reade"]
 
 # ==================== RUFF ====================
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 88
 src = ["src", "tests"]
 
@@ -87,7 +87,7 @@ line-ending = "lf"
 
 # ==================== MYPY ====================
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 strict = true
 warn_unused_configs = true
 pretty = true

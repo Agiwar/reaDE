@@ -1,9 +1,9 @@
 """Database type enumeration for supported databases."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class DbType(str, Enum):
+class DbType(StrEnum):
     """Supported database types.
 
     Attributes:
