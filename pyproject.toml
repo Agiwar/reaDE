@@ -13,6 +13,7 @@ classifiers = [
 
 dependencies = [
     "pyyaml>=6.0",
+    "pydantic>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -71,7 +72,7 @@ ignore = [
 fixable = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "ARG", "D", "ANN"]
+"tests/**/*.py" = ["S101", "S106", "ARG", "D", "ANN"]
 "__init__.py" = ["D104"]
 
 [tool.ruff.lint.pydocstyle]
@@ -92,6 +93,12 @@ strict = true
 warn_unused_configs = true
 pretty = true
 show_error_codes = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
