@@ -57,3 +57,16 @@ class TestYamlFileLoader:
 
         with pytest.raises(yaml.YAMLError):
             loader.load(Path(invalid_yaml_file.name))
+
+    def test_load_non_mapping_yaml_raises_type_error(
+        self,
+        tmp_config_dir: Path,
+    ) -> None:
+        """YAML list or scalar raises TypeError."""
+        list_file = tmp_config_dir / "list.yaml"
+        list_file.write_text("- item1\n- item2\n")
+
+        loader = YamlFileLoader(base_path=tmp_config_dir)
+
+        with pytest.raises(TypeError, match="must be a mapping"):
+            loader.load(Path("list.yaml"))

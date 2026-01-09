@@ -1,9 +1,9 @@
 """File type enumeration for supported file formats."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     """Supported file formats for config and data I/O.
 
     Attributes:
@@ -12,6 +12,7 @@ class FileType(str, Enum):
         CSV: CSV data files.
     """
 
-    YAML = "yaml"
-    JSON = "json"
-    CSV = "csv"
+    YAML = ".yaml"
+    YML = ".yml"
+    JSON = ".json"
+    CSV = ".csv"

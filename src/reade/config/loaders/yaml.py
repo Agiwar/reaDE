@@ -4,13 +4,13 @@ from typing import Any
 
 import yaml
 
-from reade.core.base.file_loader import BaseFileLoader
+from reade.core.base.file_loader import FileLoaderBase
 
 
-class YamlFileLoader(BaseFileLoader):
+class YamlFileLoader(FileLoaderBase):
     """YAML configuration file loader.
 
-    Inherits from BaseFileLoader to handle file reading and path
+    Inherits from FileLoaderBase to handle file reading and path
     resolution. Implements YAML-specific parsing.
     """
 
@@ -22,5 +22,12 @@ class YamlFileLoader(BaseFileLoader):
 
         Returns:
             Parsed configuration as a dictionary.
+
+        Raises:
+            TypeError: If YAML content is not a mapping (e.g., list or scalar).
         """
-        return yaml.safe_load(content) or {}
+        if (result := yaml.safe_load(content)) is None:
+            return {}
+        if not isinstance(result, dict):
+            raise TypeError("YAML content must be a mapping, not sequence or scalar")
+        return result

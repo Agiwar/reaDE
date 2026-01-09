@@ -1,15 +1,15 @@
 """JSON config loader."""
 
 import json
-from typing import Any, cast
+from typing import Any
 
-from reade.core.base.file_loader import BaseFileLoader
+from reade.core.base.file_loader import FileLoaderBase
 
 
-class JsonFileLoader(BaseFileLoader):
+class JsonFileLoader(FileLoaderBase):
     """JSON configuration file loader.
 
-    Inherits from BaseFileLoader to handle file reading and path resolution.
+    Inherits from FileLoaderBase to handle file reading and path resolution.
     Implements JSON-specific parsing.
     """
 
@@ -22,4 +22,9 @@ class JsonFileLoader(BaseFileLoader):
         Returns:
             Parsed configuration as a dictionary. Empty dict if content is empty.
         """
-        return cast(dict[str, Any], json.loads(content)) if content.strip() else {}
+        if not content.strip():
+            return {}
+        result = json.loads(content)
+        if not isinstance(result, dict):
+            raise TypeError("JSON content must be an object, not array or primitive")
+        return result

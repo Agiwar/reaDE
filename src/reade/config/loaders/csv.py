@@ -4,14 +4,14 @@ import csv
 import io
 from typing import Any
 
-from reade.core.base.file_loader import BaseFileLoader
+from reade.core.base.file_loader import FileLoaderBase
 
 
-class CsvFileLoader(BaseFileLoader):
+class CsvFileLoader(FileLoaderBase):
     """CSV configuration file loader.
 
     Parses CSV as key-value pairs (first column = key, second column = value).
-    Inherits from BaseFileLoader to handle file reading and path resolution.
+    Inherits from FileLoaderBase to handle file reading and path resolution.
     """
 
     def _parse_content(self, content: str) -> dict[str, Any]:

@@ -1,4 +1,4 @@
-"""Config loader protocol for parsing configuration files."""
+"""Config loader protocol for loading configuration files."""
 
 from pathlib import Path
 from typing import Any, Protocol
@@ -7,7 +7,7 @@ from typing import Any, Protocol
 class ConfigLoader(Protocol):
     """Protocol for loading configuration files into dictionaries.
 
-    Implementations handle specific formats (YAML, JSON, TOML).
+    Implementations handle specific formats (YAML, JSON, CSV).
     The loader is format-aware but content-agnostic.
     """
 
