@@ -60,6 +60,11 @@ When assisting with this project, Claude should:
   - Keep messages clean and concise (industry standard)
   - Include high-level summary of what/why changed
   - Avoid excessive detail (no file listings, known patterns, obvious implementation details)
+- **PR Workflow**:
+  - Implement code + tests together (atomic commits)
+  - Push to feature branch → Create PR → Squash merge to main
+  - Delete remote and local branch after merge
+  - Squash merge keeps main history clean (no need for perfect commits during dev)
 
 ## Code Standards
 
