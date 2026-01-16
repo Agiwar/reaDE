@@ -1,7 +1,7 @@
 """Connection interface protocol for health checking."""
 
 from types import TracebackType
-from typing import Protocol
+from typing import Protocol, Self
 
 
 class ConnectionInterface(Protocol):
@@ -11,7 +11,7 @@ class ConnectionInterface(Protocol):
     message queue clients (Kafka, RabbitMQ), cache clients (Redis), etc.
     """
 
-    def __enter__(self) -> "ConnectionInterface":
+    def __enter__(self) -> Self:
         """Enter the runtime context.
 
         Returns:
