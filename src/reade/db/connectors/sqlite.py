@@ -6,7 +6,7 @@ from reade.config.models import SqliteCredentials
 from reade.core.base.connector import ConnectionBase
 
 
-class SqliteConnector(ConnectionBase):
+class SqliteConnector(ConnectionBase[sqlite3.Connection]):
     """SQLite database connector.
 
     Provides connection management and health checking for SQLite databases.
@@ -17,8 +17,8 @@ class SqliteConnector(ConnectionBase):
 
     Example:
         >>> from reade.config.models import SqliteCredentials
-        >>> creds = SqliteCredentials(database="/path/to/db.sqlite")
-        >>> with SqliteConnector(creds) as conn:
+        >>> credentials = SqliteCredentials(database="/path/to/db.sqlite")
+        >>> with SqliteConnector(credentials) as conn:
         ...     print(conn.is_connected())
         True
     """
@@ -31,7 +31,6 @@ class SqliteConnector(ConnectionBase):
         """
         super().__init__()
         self._credentials = credentials
-        self._connection: sqlite3.Connection | None = None
 
     def connect(self) -> None:
         """Establish connection to SQLite database.
@@ -63,23 +62,10 @@ class SqliteConnector(ConnectionBase):
         """
         if self._connection is None:
             return False
+
         try:
             self._connection.execute("SELECT 1")
         except sqlite3.Error:
             return False
         else:
             return True
-
-    @property
-    def connection(self) -> sqlite3.Connection:
-        """Get the underlying sqlite3 connection.
-
-        Returns:
-            The sqlite3.Connection instance.
-
-        Raises:
-            ValueError: If connection is not initialized.
-        """
-        if self._connection is None:
-            raise ValueError("Connection is not initialized.")
-        return self._connection

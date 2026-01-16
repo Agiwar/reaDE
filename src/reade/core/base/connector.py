@@ -2,21 +2,24 @@
 
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Any
+from typing import Self
 
 
-class ConnectionBase(ABC):
+class ConnectionBase[T](ABC):
     """Base class for connection.
 
     Provides common lifecycle management for connections.
     Subclasses must implement connect(), close(), is_connected(), and ping().
+
+    Type Parameters:
+        T: The underlying driver connection type (e.g., sqlite3.Connection).
     """
 
     def __init__(self) -> None:
         """Initialize the connection."""
-        self._connection: Any = None
+        self._connection: T | None = None
 
-    def __enter__(self) -> "ConnectionBase":
+    def __enter__(self) -> Self:
         """Enter the runtime context.
 
         Returns:
@@ -72,11 +75,11 @@ class ConnectionBase(ABC):
         ...
 
     @property
-    def connection(self) -> Any:
+    def connection(self) -> T:
         """Get the underlying connection.
 
         Returns:
-            The underlying driver connection (e.g., psycopg2.Connection).
+            The underlying driver connection (e.g., sqlite3.Connection).
 
         Raises:
             ValueError: If the connection is not initialized.
