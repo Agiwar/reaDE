@@ -120,8 +120,6 @@ python examples/basic_config_loading.py
 
 ## Architecture
 
-![reaDE Overview](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Agiwar/reaDE/main/docs/reade_overview.puml)
-
 **reaDE is a Data Engineering SDK that unifies:**
 
 | Module | Responsibility |
