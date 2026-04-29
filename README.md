@@ -1,5 +1,7 @@
 # reaDE
 
+*Pronounced "ready" — the `DE` stands for **D**ata **E**ngineer.*
+
 **Data Engineering SDK with built-in Data Quality — connect, query, validate.**
 
 > Add data quality checks alongside the Python you already use to connect and query.
@@ -120,50 +122,7 @@ python examples/basic_config_loading.py
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    DQA["Data Quality Apps"]:::useCase
-    SA["Simple Apps"]:::useCase
-    F["Future"]:::useCase
-
-    subgraph PF["Python Foundation"]
-        direction TB
-        subgraph FT["Features"]
-            direction LR
-            C[config]
-            DB[db]
-            SQ[sql]
-            DI[data_io]
-            V[validation]
-            DQ[dq]
-            U[utils]
-        end
-        subgraph CO["core"]
-            direction LR
-            I[interfaces]
-            E[enums]
-            ER[errors]
-            M[models]
-        end
-        subgraph ST["Standards"]
-            direction LR
-            PY[pyproject.toml]
-            UV[uv]
-            RU[ruff]
-            MY[mypy]
-            P8[PEP8]
-            PT[pytest]
-        end
-        FT --> CO
-        CO --> ST
-    end
-
-    DQA --> PF
-    SA --> PF
-    F --> PF
-
-    classDef useCase fill:#E8F5E9,stroke:#81C784,stroke-width:2px
-```
+![reaDE Overview](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Agiwar/reaDE/main/docs/reade_overview.puml)
 
 **reaDE is a Data Engineering SDK that unifies:**
 
