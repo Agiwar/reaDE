@@ -1,0 +1,64 @@
+@startuml reaDE
+!pragma layout smetana
+
+skinparam backgroundColor white
+skinparam defaultFontSize 10
+skinparam roundCorner 6
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+title **reaDE**\nData Engineering SDK with built-in Data Quality
+
+package "Use Cases" #E8F5E9 {
+    [Data Quality Apps] #81C784
+    [Simple Apps] #FFB74D
+    [Future] #CE93D8
+}
+
+package "Python Foundation" #E3F2FD {
+    package "Features" #BBDEFB {
+        [config] #64B5F6
+        [db] #64B5F6
+        [sql] #64B5F6
+        [data_io] #64B5F6
+        [validation] #64B5F6
+        [dq] #64B5F6
+        [utils] #64B5F6
+    }
+    package "core" #90CAF9 {
+        [interfaces] #42A5F5
+        [enums] #42A5F5
+        [errors] #42A5F5
+        [models] #42A5F5
+    }
+    package "Standards" #FFF9C4 {
+        [pyproject.toml] #FFF176
+        [uv] #FFF176
+        [ruff] #FFF176
+        [mypy] #FFF176
+        [PEP8] #FFF176
+        [pytest] #FFF176
+    }
+    Features --> core
+    core --> Standards
+}
+
+[Data Quality Apps] -down-> "Python Foundation"
+[Simple Apps] -down-> "Python Foundation"
+[Future] -down-> "Python Foundation"
+
+legend right
+|= Module |= Role |
+| config | Read JSON / YAML / CSV |
+| db | Connection lifecycle, health check |
+| sql | Jinja2 template → SQL |
+| data_io | Execute query, read / write |
+| validation | Rules: count, delay, schema, ... |
+| dq | Data quality dimensions (volume, freshness, completeness) |
+| utils | Generic helpers |
+--
+**Python Foundation**: Reusable, Maintainable, Scalable, Testable
+//(supports use cases above)//
+end legend
+
+@enduml
