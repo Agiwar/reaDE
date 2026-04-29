@@ -1,0 +1,12 @@
+database:
+  type: postgresql
+  host: ${DB_HOST}
+  port: 5432
+  name: analytics
+  schema: public
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+  pool:
+    min_size: 1
+    max_size: 10
+    timeout_seconds: 30

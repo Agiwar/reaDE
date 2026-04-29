@@ -2,7 +2,7 @@
 
 **Data Engineering SDK with built-in Data Quality — connect, query, validate.**
 
-> The easiest way to add real data quality checks without adopting a platform.
+> Add data quality checks alongside the Python you already use to connect and query.
 
 ## The Problem
 
@@ -10,7 +10,7 @@
 
 ```python
 # Sound familiar?
-def get_connection(db_type, host, port, ...):  # Written 100 times
+def get_connection(db_type, host, port, ...):   # Written 100 times
 def load_config(path):                          # Copy-pasted everywhere
 def build_connection_string(...):               # Slightly different each time
 ```
@@ -18,7 +18,7 @@ def build_connection_string(...):               # Slightly different each time
 Then, after shipping the pipeline, DQ never happens because:
 
 - "I'll add validation later" → Never happens
-- "Great Expectations is too complex" → Skipped
+- "Adopting a validation tool is its own project" → Skipped
 - "No time, deadline tomorrow" → Technical debt
 
 **The reality:**
@@ -33,75 +33,75 @@ Then, after shipping the pipeline, DQ never happens because:
 
 **Why DQ gets skipped:**
 
-- **Great Expectations / Soda** = overkill for simple checks (YAML hell, learning curve, setup overhead)
-- **dbt tests** = only works in dbt context
-- **Time pressure** = ship first, validate never
-- **No integrated solution** = DQ feels like "extra work"
+- **Adopting a separate validation tool** brings its own setup, config, and operational surface
+- **Time pressure** — ship first, validate never
+- **No integrated path** — DQ feels like "extra work" instead of a natural step in the pipeline
 
-## The Solution
+## What reaDE Does
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  "I just need to connect, query, and validate"          │
-│                                                         │
-│   Too heavy ←────────────────────────→ Too manual       │
-│   Great Expectations                   Raw SQL scripts  │
-│   Soda                                 Ad-hoc checks    │
-│                                                         │
-│                    reaDE sits here                      │
-│              ↓                                          │
-│         Lightweight, built-in, just works               │
-└─────────────────────────────────────────────────────────┘
-```
+reaDE is a Python SDK for the work data engineers already do — connect to a database, render a SQL template, execute it, and check the result — with data quality treated as part of the toolkit, not a separate platform you adopt.
 
-**reaDE gives DEs tools they already understand:**
+- **Code-native** — pure Python with typed interfaces. Composable like any other library; mypy-strict at the source.
+- **DQ designed in, not bolted on** — counts, freshness, nulls, schema, and custom rules share the same execution path as your queries, so writing a check has the same shape as writing a query.
+- **Modular** — pick the parts you need (`config/`, `db/`, `sql/`, `data_io/`, `validation/`, `dq/`); each has a small, documented surface.
+- **Stays out of your way** — runs wherever your Python runs. No hosted service, no metadata store, no UI server to operate.
 
-- Connect to databases
-- Render SQL from templates
-- Execute queries
-- Validate with rules
-- Return structured results
-
-No DSL. No YAML factories. No checkpoint configs. No metadata store. No hosted agent. No UI server.
-
-Just high-value primitives.
-
-## Why reaDE?
-
-| Other Tools | reaDE |
-|-------------|-------|
-| Platform-heavy | SDK-first |
-| Config ceremony | Code-native |
-| Framework ideology | Boring and reliable |
-| DQ bolted on | DQ built in |
-| Learn new paradigm | Use what you know |
-
-**reaDE is the DE swiss-army knife with DQ built in.**
-
-**Free, open-source, built by a DE for DEs.**
+Free, open-source, MIT-licensed.
 
 ## Installation
 
-```bash
-# Using uv (recommended)
-uv pip install reade
+> **Not yet published to PyPI; install from source.**
 
-# Development install
+```bash
+# 1. Clone the repo
+git clone https://github.com/Agiwar/reaDE.git
+cd reaDE
+
+# 2. Create and activate a virtual environment (Python 3.12+)
+uv venv --python 3.12 .venv
+source .venv/bin/activate
+
+# 3. Install in editable mode with dev extras
 uv pip install -e ".[dev]"
 ```
 
 ## Quick Start
 
-```python
-from reade.core.enums import DbType
+Load a config file with a single call — extension auto-detected (YAML / JSON / CSV):
 
-# Database types available
-print(DbType.POSTGRESQL)  # postgresql
-print(DbType.MYSQL)       # mysql
-print(DbType.SQLITE)      # sqlite
+```python
+from pathlib import Path
+
+from reade.config.utils import get_config_content
+
+base = Path("examples/sample_configs")
+
+db_config = get_config_content("db.yaml", base_path=base)
+app_config = get_config_content("app.json", base_path=base)
+settings = get_config_content("settings.csv", base_path=base)
+
+print(db_config["database"]["host"])  # e.g. "localhost"
+print(app_config["service"])          # e.g. "reade-demo"
+print(settings["log_level"])          # e.g. "INFO"
 ```
 
-> **Note**: Connection and query APIs are under development. See [Project Structure](#project-structure) for current modules.
+Runnable demo — see [`examples/`](examples/):
+
+```bash
+python examples/basic_config_loading.py
+```
+
+### Module Status
+
+| Module | Status | Notes |
+|--------|--------|-------|
+| `config/` | ✅ Functional | YAML / JSON / CSV loaders + factory + `get_config_content()` |
+| `db/` (SQLite) | ✅ Functional | `SqliteConnector` with tests |
+| `db/` (PostgreSQL, MySQL, Trino) | 🚧 In progress | Connector scaffolding in place |
+| `sql/` | 🚧 In progress | Jinja2 template rendering |
+| `data_io/` | 🚧 In progress | SQL execution, readers/writers/serializers |
+| `validation/` | 🚧 In progress | Schema, type, and rule validation |
+| `dq/` | 🚧 In progress | DQ dimension aggregation |
 
 ## MVP Scope
 
