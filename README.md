@@ -4,7 +4,7 @@
 
 **Data Engineering SDK with built-in Data Quality — connect, query, validate.**
 
-> Add data quality checks alongside the Python you already use to connect and query.
+> Every DE, ready to ship — boilerplate handled, data quality built in.
 
 ## The Problem
 
