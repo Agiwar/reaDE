@@ -110,8 +110,8 @@ python examples/basic_config_loading.py
 - MySQL (pymysql)
 - SQLite (stdlib)
 
-**Optional:**
-- Trino (`pip install reade[trino]`)
+**Planned (not yet shipped):**
+- Trino (analytics engine connector)
 
 **Not in MVP:**
 - Oracle, DB2, ClickHouse, Snowflake
@@ -120,18 +120,61 @@ python examples/basic_config_loading.py
 
 ## Architecture
 
-![reaDE Overview](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Agiwar/reaDE/main/docs/reade_overview.puml)
+```mermaid
+flowchart TD
+    DQA["Data Quality Apps"]:::useCase
+    SA["Simple Apps"]:::useCase
+    F["Future"]:::useCase
+
+    subgraph PF["Python Foundation"]
+        direction TB
+        subgraph FT["Features"]
+            direction LR
+            C[config]
+            DB[db]
+            SQ[sql]
+            DI[data_io]
+            V[validation]
+            DQ[dq]
+            U[utils]
+        end
+        subgraph CO["core"]
+            direction LR
+            I[interfaces]
+            E[enums]
+            ER[errors]
+            M[models]
+        end
+        subgraph ST["Standards"]
+            direction LR
+            PY[pyproject.toml]
+            UV[uv]
+            RU[ruff]
+            MY[mypy]
+            P8[PEP8]
+            PT[pytest]
+        end
+        FT --> CO
+        CO --> ST
+    end
+
+    DQA --> PF
+    SA --> PF
+    F --> PF
+
+    classDef useCase fill:#E8F5E9,stroke:#81C784,stroke-width:2px
+```
 
 **reaDE is a Data Engineering SDK that unifies:**
 
 | Module | Responsibility |
 |--------|---------------|
-| `config/` | Parse YAML/JSON/TOML → typed objects |
+| `config/` | Parse YAML / JSON / CSV → typed objects |
 | `db/` | Connection lifecycle, health check |
 | `sql/` | Render Jinja2 templates → SQL strings |
-| `data_io/` | Execute SQL, Kafka, external I/O |
+| `data_io/` | Execute SQL, external I/O |
 | `validation/` | Schema, type, and rule validation |
-| `dq/` | DQ dimension aggregation |
+| `dq/` | Data quality dimension aggregation |
 
 **Data Flow:**
 ```
@@ -152,10 +195,10 @@ src/reade/
 │   ├── errors/     # Exception hierarchy
 │   ├── interfaces/ # Protocol definitions (contracts)
 │   └── models/     # Shared data models
-├── config/         # Config parsing (YAML/JSON/TOML)
+├── config/         # Config parsing (YAML/JSON/CSV)
 ├── db/             # Connection lifecycle, health check
 ├── sql/            # Jinja2 SQL template rendering
-├── data_io/        # SQL execution, Kafka, external I/O
+├── data_io/        # SQL execution, external I/O
 ├── validation/     # Schema, type, and rule validation
 │   └── rules/      # Generic rules (count, agg, null, delay)
 └── dq/             # DQ dimension aggregation
@@ -166,8 +209,8 @@ src/reade/
 
 ```bash
 # Setup
-uv venv --python 3.10 .pyvenv3.10
-source .pyvenv3.10/bin/activate
+uv venv --python 3.12 .venv
+source .venv/bin/activate
 uv pip install -e ".[dev]"
 
 # Commands
