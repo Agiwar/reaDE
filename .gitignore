@@ -31,7 +31,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-.python-version
 
 # IDEs
 # .vscode/ contains personal settings (shared config at Projects/.vscode/)
@@ -101,8 +100,7 @@ site/
 *.bak
 .cache/
 
-# uv specific
-uv.lock
+# uv: lock file is committed for reproducible installs (do NOT ignore)
 
 # Legacy requirements files (using pyproject.toml instead)
 requirements.txt
