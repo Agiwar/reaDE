@@ -59,12 +59,11 @@ Free, open-source, MIT-licensed.
 git clone https://github.com/Agiwar/reaDE.git
 cd reaDE
 
-# 2. Create and activate a virtual environment (Python 3.12+)
-uv venv --python 3.12 .venv
-source .venv/bin/activate
+# 2. Create the environment and install reaDE (resolves from uv.lock)
+uv sync
 
-# 3. Install in editable mode with dev extras
-uv pip install -e ".[dev]"
+# 3. Activate the environment
+source .venv/bin/activate
 ```
 
 ## Quick Start
@@ -122,7 +121,9 @@ python examples/basic_config_loading.py
 
 ## Architecture
 
-![reaDE Overview](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/Agiwar/reaDE/main/docs/reade_overview.puml)
+![reaDE Overview](docs/reade_overview.png)
+
+<sub>Diagram source: [`docs/reade_overview.puml`](docs/reade_overview.puml) — regenerate `reade_overview.png` after editing it.</sub>
 
 **reaDE is a Data Engineering SDK that unifies:**
 
@@ -167,10 +168,9 @@ src/reade/
 ## Development
 
 ```bash
-# Setup
-uv venv --python 3.12 .venv
+# Setup (installs dev tools from locked versions)
+uv sync --extra dev
 source .venv/bin/activate
-uv pip install -e ".[dev]"
 
 # Commands
 make help          # Show all commands
