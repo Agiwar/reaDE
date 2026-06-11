@@ -1,5 +1,0 @@
-log_level,INFO
-batch_size,1000
-retry_attempts,3
-timeout_seconds,30
-environment,local

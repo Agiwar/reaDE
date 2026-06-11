@@ -1,1 +1,0 @@
-"""Data freshness delay rule."""

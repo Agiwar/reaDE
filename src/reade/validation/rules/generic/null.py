@@ -1,1 +1,0 @@
-"""Null value check rule."""

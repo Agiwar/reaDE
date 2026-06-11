@@ -1,9 +1,0 @@
-{
-  "service": "reade-demo",
-  "version": "0.1.0",
-  "debug": false,
-  "features": {
-    "metrics_enabled": true,
-    "tracing_enabled": false
-  }
-}
