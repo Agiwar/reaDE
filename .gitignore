@@ -94,6 +94,8 @@ build/
 # Documentation
 docs/_build/
 site/
+# Internal process notes stay out of the public repo
+docs/internal/
 
 # Temporary files
 *.tmp
