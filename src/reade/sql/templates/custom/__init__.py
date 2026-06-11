@@ -1,1 +1,0 @@
-"""User-defined SQL templates."""

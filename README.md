@@ -66,43 +66,36 @@ uv sync
 source .venv/bin/activate
 ```
 
-## Quick Start
+## Status
 
-Load a config file with a single call — extension auto-detected (YAML / JSON / CSV):
+reaDE is pre-alpha, being rebuilt as a [walking skeleton](DEVELOPMENT_PLAN.md):
+the public API surface in `core/` lands first, then thin implementations of
+the whole chain, then each module is hardened in release-gated sprints.
+
+What exists today is the `core/` contract layer:
 
 ```python
-from pathlib import Path
-
-from reade.config.utils import get_config_content
-
-base = Path("examples/sample_configs")
-
-db_config = get_config_content("db.yaml", base_path=base)
-app_config = get_config_content("app.json", base_path=base)
-settings = get_config_content("settings.csv", base_path=base)
-
-print(db_config["database"]["host"])  # e.g. "localhost"
-print(app_config["service"])          # e.g. "reade-demo"
-print(settings["log_level"])          # e.g. "INFO"
-```
-
-Runnable demo — see [`examples/`](examples/):
-
-```bash
-python examples/basic_config_loading.py
+from reade.core.enums import DbType, FileType
+from reade.core.errors import ConfigError, DbError, ReadeError
+from reade.core.interfaces import ConfigLoader, ConnectionInterface
+from reade.core.models import DB_METADATA_REGISTRY, DbMetadata
 ```
 
 ### Module Status
 
 | Module | Status | Notes |
 |--------|--------|-------|
-| `config/` | ✅ Functional | YAML / JSON / CSV loaders + factory + `get_config_content()` |
-| `db/` (SQLite) | ✅ Functional | `SqliteConnector` with tests |
-| `db/` (PostgreSQL, MySQL, Trino) | 🚧 In progress | Connector scaffolding in place |
-| `sql/` | 🚧 In progress | Jinja2 template rendering |
-| `data_io/` | 🚧 In progress | SQL execution, readers/writers/serializers |
-| `validation/` | 🚧 In progress | Schema, type, and rule validation |
-| `dq/` | 🚧 In progress | DQ dimension aggregation |
+| `core/` | ✅ API surface | Protocols, enums, errors, models |
+| `config/` | 📋 Sprint 0.2 | YAML first; JSON / CSV follow in Phase 1 |
+| `db/` | 📋 Sprint 0.2 | SQLite first; PostgreSQL / MySQL in Phase 1 |
+| `sql/` | 📋 Sprint 0.2 | Jinja2 template rendering |
+| `data_io/` | 📋 Sprint 0.2 | SQL execution, readers/writers |
+| `validation/` | 📋 Sprint 0.2 | Row-count rule first; more rules in Phase 3 |
+| `dq/` | 📋 Sprint 0.2 | Volume dimension first; more dims in Phase 3 |
+
+Earlier prototype implementations are parked on the
+[`archive/pre-skeleton`](https://github.com/Agiwar/reaDE/tree/archive/pre-skeleton)
+branch and will be re-landed sprint by sprint.
 
 ## MVP Scope
 
@@ -149,21 +142,16 @@ parse   connect  render  execute    validate   aggregate
 
 ```
 src/reade/
-├── core/           # Shared foundation
-│   ├── base/       # ABCs with shared implementation
-│   ├── enums/      # DbType, DqDimension, etc.
-│   ├── errors/     # Exception hierarchy
-│   ├── interfaces/ # Protocol definitions (contracts)
-│   └── models/     # Shared data models
-├── config/         # Config parsing (YAML/JSON/CSV)
-├── db/             # Connection lifecycle, health check
-├── sql/            # Jinja2 SQL template rendering
-├── data_io/        # SQL execution, external I/O
-├── validation/     # Schema, type, and rule validation
-│   └── rules/      # Generic rules (count, agg, null, delay)
-└── dq/             # DQ dimension aggregation
-    └── dimensions/ # Volume, timeliness, completeness, accuracy
+└── core/           # Shared foundation (the frozen public API surface)
+    ├── enums/      # DbType, FileType
+    ├── errors/     # Exception hierarchy rooted at ReadeError
+    ├── interfaces/ # Protocol definitions (contracts)
+    └── models/     # Shared data models (DbMetadata)
 ```
+
+Feature modules (`config/`, `db/`, `sql/`, `data_io/`, `validation/`, `dq/`)
+are added sprint by sprint — see [ARCHITECTURE.md](ARCHITECTURE.md) for the
+target layout and dependency chain.
 
 ## Development
 

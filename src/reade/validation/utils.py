@@ -1,1 +1,0 @@
-"""Validation utility functions."""

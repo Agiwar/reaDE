@@ -15,11 +15,6 @@ repos:
     rev: v1.11.0
     hooks:
       - id: mypy
-        additional_dependencies:
-          - pydantic>=2.5.0
-          - types-pyyaml
-          - types-toml
-          - pandas-stubs
         args: [--ignore-missing-imports]
 
   # Bandit - Security linter
@@ -29,15 +24,6 @@ repos:
       - id: bandit
         args: [-c, pyproject.toml]
         additional_dependencies: ["bandit[toml]"]
-
-  # SQLFluff - SQL linter
-  - repo: https://github.com/sqlfluff/sqlfluff
-    rev: 3.1.0
-    hooks:
-      - id: sqlfluff-lint
-        files: \.sql$
-      - id: sqlfluff-fix
-        files: \.sql$
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks

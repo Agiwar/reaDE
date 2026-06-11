@@ -13,10 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
-dependencies = [
-    "pyyaml>=6.0",
-    "pydantic>=2.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
@@ -28,9 +25,6 @@ dev = [
     "ruff",
     "mypy",
     "bandit[toml]",
-
-    # Type stubs
-    "types-PyYAML",
 
     # Pre-commit
     "pre-commit",
@@ -95,12 +89,6 @@ strict = true
 warn_unused_configs = true
 pretty = true
 show_error_codes = true
-plugins = ["pydantic.mypy"]
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"

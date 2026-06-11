@@ -63,6 +63,7 @@ dmyp.json
 
 # Claude Code local settings
 .claude/
+CLAUDE.md
 
 # Personal helper scripts
 scripts/
@@ -94,6 +95,8 @@ build/
 # Documentation
 docs/_build/
 site/
+# Internal process notes stay out of the public repo
+docs/internal/
 
 # Temporary files
 *.tmp
