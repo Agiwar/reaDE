@@ -38,20 +38,31 @@ Public API surface is drafted here and treated as frozen afterward
 
 **Sprint 0.1 — Core & tooling**
 - `core/`: interfaces (Protocols), enums, errors, models
-- Tooling: `pyproject.toml`, `uv`, `ruff`, `mypy` (strict), `pytest`, GitHub Actions CI
-- `ARCHITECTURE.md` and this plan committed
+- Tooling: `pyproject.toml`, `uv`, `ruff`, `mypy` (strict), `pytest`,
+  `bandit`, `pre-commit`, GitHub Actions CI
+- `ARCHITECTURE.md` and the public plan committed; internal process notes
+  stay untracked
 - DoD: CI green; `import reade` works; every public interface has a
   Google-style docstring
 
 **Sprint 0.2 — Thin implementations across the whole chain**
-- `config`: YAML only, returns typed object
-- `db`: SQLite connector only (zero-setup), connect/close only
+
+Re-lands parked code from the `archive/pre-skeleton` branch. The `core/base`
+ABCs return only after design review; `ConnectionBase.connection` swaps
+`ValueError` for `NotConnectedError` at re-land.
+
+- `config`: YAML only, returns parsed `dict` (typed config objects are
+  Sprint 1.1)
+- `db`: SQLite connector only (zero-setup): connect, close, ping — ping is
+  accepted scope creep; rationale recorded in PR #3's design notes
 - `sql`: render one Jinja2 template
 - `data_io`: execute one query, return rows
 - `validation`: one rule (row count)
 - `dq`: one dimension (volume), built on validation
 - `examples/end_to_end.py` runs the full chain against SQLite
-- DoD: example runs clean; contract tests pass for every interface
+- DoD: example runs clean; contract tests pass for every interface and
+  assert `close()` idempotency and the two-tier `ConfigLoader` error
+  contract
 
 **Gate → tag `v0.1.0a1` (alpha).** From this point, every phase ends in a
 usable release — this closes the "everything 30%, nothing shippable" risk.
@@ -96,6 +107,8 @@ usable release — this closes the "everything 30%, nothing shippable" risk.
 
 **Sprint 3.1 — validation**
 - Rules: count, delay, schema, custom-rule plug-in point
+- Note: the parked rule set (`agg`, `null`) diverges from this list
+  (`schema`); reconcile at the re-land design review
 
 **Sprint 3.2 — dq**
 - Dimensions: volume, freshness, completeness (composed from validation rules)
