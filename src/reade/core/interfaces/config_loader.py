@@ -23,8 +23,9 @@ class ConfigLoader(Protocol):
         Raises:
             FileNotFoundError: If the file does not exist; passed through
                 unchanged.
-            ConfigError: If the file content cannot be parsed. The original
-                parser exception is attached as the cause
+            ConfigError: If the loader does not handle the file's format,
+                or the content cannot be parsed. For parse failures the
+                original parser exception is attached as the cause
                 (``raise ... from``).
         """
         ...

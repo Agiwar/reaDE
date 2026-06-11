@@ -7,12 +7,16 @@ from typing import Protocol, Self
 class ConnectionInterface(Protocol):
     """Protocol for connection lifecycle and health checking.
 
-    This interface is generic and can be implemented by database connectors,
-    message queue clients (Kafka, RabbitMQ), cache clients (Redis), etc.
+    The contract for reaDE database connectors. Other connection-like
+    resources with the same lifecycle (establish, health-check, close)
+    can satisfy it structurally, but the SDK's error taxonomy and
+    health-check semantics are designed around database connections.
     """
 
     def __enter__(self) -> Self:
-        """Enter the runtime context.
+        """Enter the runtime context, establishing the connection.
+
+        Entering the context is equivalent to calling connect().
 
         Returns:
             The connection interface instance.
@@ -25,7 +29,9 @@ class ConnectionInterface(Protocol):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        """Exit the runtime context.
+        """Exit the runtime context, closing the connection.
+
+        Equivalent to calling close(), including its no-op guarantee.
 
         Args:
             exc_type: The exception type.
