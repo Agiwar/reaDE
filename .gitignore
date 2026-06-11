@@ -63,6 +63,7 @@ dmyp.json
 
 # Claude Code local settings
 .claude/
+CLAUDE.md
 
 # Personal helper scripts
 scripts/
