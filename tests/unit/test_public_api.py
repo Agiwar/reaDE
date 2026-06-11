@@ -7,9 +7,10 @@ from reade.core.errors import (
     DataIoError,
     DbError,
     DqError,
+    NotConnectedError,
     ReadeError,
+    RuleError,
     SqlError,
-    ValidationError,
 )
 from reade.core.interfaces import ConfigLoader, ConnectionInterface
 from reade.core.models import DB_METADATA_REGISTRY, DbMetadata
@@ -30,10 +31,14 @@ def test_module_errors_derive_from_reade_error() -> None:
         DataIoError,
         DbError,
         DqError,
+        RuleError,
         SqlError,
-        ValidationError,
     )
     assert all(issubclass(error, ReadeError) for error in module_errors)
+
+
+def test_not_connected_error_derives_from_db_error() -> None:
+    assert issubclass(NotConnectedError, DbError)
 
 
 def test_db_types_cover_exactly_the_mvp_databases() -> None:

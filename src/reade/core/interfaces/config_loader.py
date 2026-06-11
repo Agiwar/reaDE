@@ -21,6 +21,10 @@ class ConfigLoader(Protocol):
             Parsed configuration as a dictionary.
 
         Raises:
-            FileNotFoundError: If the file does not exist.
+            FileNotFoundError: If the file does not exist; passed through
+                unchanged.
+            ConfigError: If the file content cannot be parsed. The original
+                parser exception is attached as the cause
+                (``raise ... from``).
         """
         ...
