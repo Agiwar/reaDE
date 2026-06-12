@@ -82,3 +82,12 @@ class TestMergeEnvOverrides:
         result = merge_env_overrides(data, {"READE__DB__HOST": "db.internal"})
 
         assert result == {"db": {"host": "db.internal"}}
+
+    def test_prefix_conflicting_overrides_resolve_deepest_last(self) -> None:
+        # Insertion order puts the deeper path first; sorted application
+        # must make the outcome deterministic with the deeper path winning.
+        environ = {"READE__DB__HOST": "db.internal", "READE__DB": "scalar"}
+
+        result = merge_env_overrides({}, environ)
+
+        assert result == {"db": {"host": "db.internal"}}
