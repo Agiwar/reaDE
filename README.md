@@ -93,10 +93,10 @@ from reade.dq import VolumeDimension
 | Module | Status | Notes |
 |--------|--------|-------|
 | `core/` | ✅ API surface | Protocols, enums, errors, models, base ABCs |
-| `config/` | ✅ Thin slice | YAML → `dict`; JSON / CSV + typed objects in Phase 1 |
+| `config/` | ✅ Thin slice | YAML → `dict`; JSON + typed objects in Phase 1 |
 | `db/` | ✅ Thin slice | SQLite connect/close/ping; PostgreSQL / MySQL in Phase 1 |
 | `sql/` | ✅ Thin slice | One Jinja2 template (`row_count`); discovery convention in Phase 2 |
-| `data_io/` | ✅ Thin slice | Execute query → rows; readers/writers in Phase 2 |
+| `data_io/` | ✅ Thin slice | Execute query → rows; readers/writers (incl. CSV) in Phase 2 |
 | `validation/` | ✅ Thin slice | Row-count rule; more rules in Phase 3 |
 | `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
 
@@ -127,10 +127,10 @@ Earlier prototype implementations are being re-landed sprint by sprint.
 
 | Module | Responsibility |
 |--------|---------------|
-| `config/` | Parse YAML / JSON / CSV → typed objects |
+| `config/` | Parse YAML / JSON → typed objects |
 | `db/` | Connection lifecycle, health check |
 | `sql/` | Render Jinja2 templates → SQL strings |
-| `data_io/` | Execute SQL, external I/O |
+| `data_io/` | Execute SQL, external I/O (incl. CSV readers) |
 | `validation/` | Schema, type, and rule validation |
 | `dq/` | Data quality dimension aggregation |
 

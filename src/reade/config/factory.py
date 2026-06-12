@@ -2,6 +2,7 @@
 
 from typing import ClassVar
 
+from reade.config.loaders.json import JsonLoader
 from reade.config.loaders.yaml import YamlLoader
 from reade.core.base.file_loader import FileLoaderBase
 from reade.core.enums.file_type import FileType
@@ -18,9 +19,10 @@ class ConfigLoaderFactory:
     ``FileLoaderBase.load``.
     """
 
-    _loaders: ClassVar[dict[FileType, type[FileLoaderBase]]] = dict.fromkeys(
-        YamlLoader.file_types, YamlLoader
-    )
+    _loaders: ClassVar[dict[FileType, type[FileLoaderBase]]] = {
+        **dict.fromkeys(YamlLoader.file_types, YamlLoader),
+        **dict.fromkeys(JsonLoader.file_types, JsonLoader),
+    }
 
     @classmethod
     def get_loader(cls, file_type: FileType) -> ConfigLoader:
@@ -34,7 +36,8 @@ class ConfigLoaderFactory:
 
         Raises:
             ConfigError: If no loader is registered for the file type.
-                Only YAML is registered today; JSON and CSV follow.
+                CSV never registers here: CSV is data, not config, and
+                belongs to data_io readers (Phase 2).
         """
         try:
             loader_cls = cls._loaders[file_type]
