@@ -1,6 +1,7 @@
 """SQLite database connector."""
 
 import sqlite3
+from typing import Any
 
 from reade.core.base.connector import ConnectionBase
 from reade.core.errors.db import DbError
@@ -69,6 +70,30 @@ class SqliteConnector(ConnectionBase[sqlite3.Connection]):
             True if connected, False otherwise.
         """
         return self._connection is not None
+
+    def execute(self, sql: str) -> list[tuple[Any, ...]]:
+        """Execute a SQL statement and return all result rows, materialized.
+
+        Statements without a result set (DDL, INSERT) return an empty
+        list.
+
+        Args:
+            sql: The SQL statement to execute.
+
+        Returns:
+            All result rows as tuples.
+
+        Raises:
+            NotConnectedError: If the connector is not connected.
+            DbError: If the driver fails to execute the statement or
+                fetch its results.
+        """
+        try:
+            cursor = self.connection.execute(sql)
+            rows = cursor.fetchall()
+        except sqlite3.Error as e:
+            raise DbError("Failed to execute SQL statement") from e
+        return [tuple(row) for row in rows]
 
     def ping(self) -> bool:
         """Perform a round-trip health check (``SELECT 1``).

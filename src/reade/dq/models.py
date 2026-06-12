@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from reade.validation.models import RuleResult
+from reade.validation import RuleResult
 
 
 @dataclass(frozen=True)

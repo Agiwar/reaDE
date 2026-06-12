@@ -5,8 +5,8 @@ from typing import Any
 from reade.core.base.connector import ConnectionBase
 from reade.core.errors.base import ReadeError
 from reade.core.errors.validation import RuleError
-from reade.data_io.execute import execute_query
-from reade.sql.render import render_template
+from reade.data_io import execute_query
+from reade.sql import render_template
 from reade.validation.models import RuleResult
 
 
@@ -40,7 +40,7 @@ class RowCountRule:
         Raises:
             SqlError: If the count query cannot be rendered; propagated
                 from the sql layer, like any ``ReadeError`` raised below
-                this layer (``DataIoError``, ``NotConnectedError``).
+                this layer (``DbError``, ``NotConnectedError``).
             RuleError: If the query result has no usable count value.
         """
         sql = render_template("row_count", table=self._table)

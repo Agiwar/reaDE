@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Self
+from typing import Any, Self
 
 from reade.core.errors.db import NotConnectedError
 
@@ -85,6 +85,29 @@ class ConnectionBase[T](ABC):
 
         Returns:
             True if the connection is healthy, False otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def execute(self, sql: str) -> list[tuple[Any, ...]]:
+        """Execute a SQL statement and return all result rows, materialized.
+
+        Statements without a result set (DDL, INSERT) return an empty
+        list. Driver specifics — cursors, fetch styles — are the
+        implementation's concern and never leak to callers.
+
+        Args:
+            sql: The SQL statement to execute.
+
+        Returns:
+            All result rows as tuples.
+
+        Raises:
+            NotConnectedError: If connect() has not established a
+                connection.
+            DbError: If the driver fails to execute the statement or
+                fetch its results. The driver exception is attached as
+                the cause.
         """
         ...
 

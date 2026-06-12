@@ -84,6 +84,10 @@ from reade.validation import RowCountRule
 from reade.dq import VolumeDimension
 ```
 
+> **Alpha caveat:** SQL templating interpolates identifiers (e.g.
+> `{{ table }}`) without sanitization — parameter safety is Phase 2
+> scope. Do not render templates with untrusted input.
+
 ### Module Status
 
 | Module | Status | Notes |
@@ -96,9 +100,7 @@ from reade.dq import VolumeDimension
 | `validation/` | ✅ Thin slice | Row-count rule; more rules in Phase 3 |
 | `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
 
-Earlier prototype implementations are parked on the
-[`archive/pre-skeleton`](https://github.com/Agiwar/reaDE/tree/archive/pre-skeleton)
-branch and will be re-landed sprint by sprint.
+Earlier prototype implementations are being re-landed sprint by sprint.
 
 ## MVP Scope
 

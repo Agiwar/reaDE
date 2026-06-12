@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from reade.core.errors import DbError
+from reade.core.errors import DbError, NotConnectedError
 from reade.db import SqliteConnector
 
 
@@ -42,3 +42,21 @@ class TestSqliteConnector:
             cursor = connector.connection.execute("SELECT 1")
 
             assert cursor.fetchone() == (1,)
+
+    def test_execute_returns_materialized_rows(self) -> None:
+        with SqliteConnector(database=":memory:") as connector:
+            connector.execute("CREATE TABLE t (id INTEGER)")
+            connector.execute("INSERT INTO t VALUES (1), (2)")
+
+            assert connector.execute("SELECT id FROM t ORDER BY id") == [(1,), (2,)]
+
+    def test_execute_failure_raises_db_error_with_cause(self) -> None:
+        with SqliteConnector(database=":memory:") as connector:
+            with pytest.raises(DbError) as exc_info:
+                connector.execute("SELECT * FROM missing_table")
+
+            assert exc_info.value.__cause__ is not None
+
+    def test_execute_unconnected_raises_not_connected_error(self) -> None:
+        with pytest.raises(NotConnectedError):
+            SqliteConnector(database=":memory:").execute("SELECT 1")

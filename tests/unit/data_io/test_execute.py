@@ -4,7 +4,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from reade.core.errors import DataIoError, NotConnectedError
+from reade.core.errors import DbError, NotConnectedError
 from reade.data_io import execute_query
 from reade.db import SqliteConnector
 
@@ -29,10 +29,10 @@ class TestExecuteQuery:
     ) -> None:
         assert execute_query(connector, "CREATE TABLE t (id INTEGER)") == []
 
-    def test_driver_failure_raises_data_io_error_with_cause(
+    def test_driver_failure_propagates_db_error_from_connector(
         self, connector: SqliteConnector
     ) -> None:
-        with pytest.raises(DataIoError) as exc_info:
+        with pytest.raises(DbError) as exc_info:
             execute_query(connector, "SELECT * FROM missing_table")
 
         assert exc_info.value.__cause__ is not None

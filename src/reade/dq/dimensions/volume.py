@@ -4,7 +4,7 @@ from typing import Any
 
 from reade.core.base.connector import ConnectionBase
 from reade.dq.models import DqResult
-from reade.validation.rules.count import RowCountRule
+from reade.validation import RowCountRule
 
 
 class VolumeDimension:
