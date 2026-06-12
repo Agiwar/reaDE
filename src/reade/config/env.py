@@ -12,6 +12,8 @@ _DELIMITER = "__"
 def merge_env_overrides(
     data: dict[str, Any],
     environ: Mapping[str, str] = os.environ,
+    *,
+    scope: str | None = None,
 ) -> dict[str, Any]:
     """Merge ``READE__``-prefixed environment variables into config data.
 
@@ -27,6 +29,15 @@ def merge_env_overrides(
     ``READE__DB__HOST``) the deeper path lands last and wins where they
     overlap, regardless of environment iteration order.
 
+    Scoping: with ``scope`` given (e.g. ``"POSTGRES"``), only
+    ``READE__POSTGRES__*`` variables apply, and the scope segment is
+    stripped before the merge — ``READE__POSTGRES__HOST`` overrides
+    ``host``. Variables outside the scope, including bare ``READE__*``
+    ones, are ignored: scoping is the namespace isolation that lets
+    several config models share one process environment. The scope
+    segment is matched exactly (environment variable names are
+    case-sensitive; the convention is uppercase).
+
     The merge is pure: ``data`` is not mutated. Keys with no
     case-insensitive match are inserted lowercased, so env-only values
     work and typo'd variables reach validation, where models reject
@@ -39,10 +50,19 @@ def merge_env_overrides(
         data: Parsed configuration data.
         environ: Environment mapping; injectable for tests. Defaults to
             ``os.environ``.
+        scope: Namespace segment restricting which variables apply;
+            ``None`` (the default) applies every ``READE__*`` variable.
 
     Returns:
         A new dictionary with the overrides applied.
     """
+    if scope is not None:
+        namespace = f"{_PREFIX}{scope}{_DELIMITER}"
+        environ = {
+            _PREFIX + var.removeprefix(namespace): value
+            for var, value in environ.items()
+            if var.startswith(namespace) and len(var) > len(namespace)
+        }
     result = copy.deepcopy(data)
     for var, value in sorted(environ.items()):
         if not var.startswith(_PREFIX):

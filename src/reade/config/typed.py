@@ -37,6 +37,14 @@ def load_config[ModelT: BaseModel](
     env-var convention pass ``os.environ[...]`` into ``search_paths``
     themselves.
 
+    Override scoping: a model may declare a class-level ``env_prefix``
+    (``PostgresConfig`` declares ``"POSTGRES"``, ``MysqlConfig``
+    ``"MYSQL"``). When present, only ``READE__<PREFIX>__*`` variables
+    apply to that model — the prefix segment is stripped before the
+    merge, and everything outside it (including bare ``READE__*``
+    variables) is ignored. Models without a prefix (``SqliteConfig``)
+    keep the unscoped behavior.
+
     Args:
         name: Configuration file path or name to resolve.
         model: The pydantic model class to validate the content against.
@@ -79,8 +87,11 @@ def load_config[ModelT: BaseModel](
             f"No loader registered for file suffix {path.suffix!r}"
         ) from e
 
+    scope: str | None = getattr(model, "env_prefix", None)
     data = ConfigLoaderFactory.get_loader(file_type).load(path)
-    data = merge_env_overrides(data, os.environ if environ is None else environ)
+    data = merge_env_overrides(
+        data, os.environ if environ is None else environ, scope=scope
+    )
     try:
         return model.model_validate(data)
     except ValidationError as e:
