@@ -44,6 +44,11 @@ class PostgresConfig(BaseModel):
         user: Login role name.
         password: Login password.
         port: Server port. Defaults to PostgreSQL's standard 5432.
+        connect_timeout: Per-attempt connection timeout in seconds;
+            ``None`` keeps the driver default (libpq waits indefinitely).
+        connect_attempts: Total connect() attempts; 1 means no retry.
+        retry_backoff: Delay before the second attempt, in seconds;
+            doubles after each subsequent failure.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -55,6 +60,9 @@ class PostgresConfig(BaseModel):
     user: str
     password: str
     port: int = 5432
+    connect_timeout: int | None = None
+    connect_attempts: int = 1
+    retry_backoff: float = 0.5
 
 
 class MysqlConfig(BaseModel):
@@ -77,6 +85,11 @@ class MysqlConfig(BaseModel):
         user: Login user name.
         password: Login password.
         port: Server port. Defaults to MySQL's standard 3306.
+        connect_timeout: Per-attempt connection timeout in seconds;
+            ``None`` keeps the driver default (pymysql uses 10 seconds).
+        connect_attempts: Total connect() attempts; 1 means no retry.
+        retry_backoff: Delay before the second attempt, in seconds;
+            doubles after each subsequent failure.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -88,3 +101,6 @@ class MysqlConfig(BaseModel):
     user: str
     password: str
     port: int = 3306
+    connect_timeout: int | None = None
+    connect_attempts: int = 1
+    retry_backoff: float = 0.5

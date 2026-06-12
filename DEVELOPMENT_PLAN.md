@@ -78,7 +78,15 @@ usable release — this closes the "everything 30%, nothing shippable" risk.
 - DoD: ≥90% coverage on module; README section; example
 
 **Sprint 1.2 — db**
-- Connection lifecycle, health check, pooling, retry policy
+- Connection lifecycle, health check, retry policy (connect-scoped:
+  bounded attempts, doubling backoff, per-attempt timeout; statement
+  execution is never retried — auto-retrying writes is a correctness
+  hazard)
+- Pooling: deferred by amendment. Nothing in the golden path holds
+  concurrent connections (batch DQ jobs use one), and the idle-timeout
+  failure mode that pools-with-pre-ping address is covered by `ping()`
+  plus connect retry. Revisit at the Phase 4 API-freeze walk if a
+  concurrent consumer appears.
 - Second and third connectors prove the plug-in interface: **PostgreSQL and
   MySQL** (core MVP DBs; ClickHouse/Snowflake/Oracle are out of MVP scope;
   Trino is optional and may be deferred to Phase 4)

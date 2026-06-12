@@ -5,6 +5,7 @@ the connector module), so every code path runs without a server. Real-server
 behavior is asserted by the integration suite.
 """
 
+import time
 from types import TracebackType
 from typing import Any, Self
 
@@ -155,6 +156,51 @@ class TestConnect:
 
         assert isinstance(exc_info.value.__cause__, FakeMySQLError)
         assert not connector.is_connected()
+
+    def test_connect_timeout_passed_through_when_set(
+        self, fake_pymysql: FakePymysql
+    ) -> None:
+        connector = MysqlConnector(
+            host="h", database="d", user="u", password="p", connect_timeout=7
+        )
+        connector.connect()
+
+        assert fake_pymysql.connect_kwargs is not None
+        assert fake_pymysql.connect_kwargs["connect_timeout"] == 7
+
+    def test_connect_attempts_below_one_raise_value_error(self) -> None:
+        with pytest.raises(ValueError, match="connect_attempts"):
+            MysqlConnector(
+                host="h", database="d", user="u", password="p", connect_attempts=0
+            )
+
+    def test_connect_retries_transient_failures_then_succeeds(
+        self, fake_pymysql: FakePymysql, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        sleeps: list[float] = []
+        monkeypatch.setattr(time, "sleep", sleeps.append)
+        failures = iter([FakeMySQLError("blip"), FakeMySQLError("blip")])
+        original_connect = fake_pymysql.connect
+
+        def flaky(**kwargs: Any) -> FakeConnection:
+            for failure in failures:
+                raise failure
+            return original_connect(**kwargs)
+
+        monkeypatch.setattr(fake_pymysql, "connect", flaky)
+        connector = MysqlConnector(
+            host="h",
+            database="d",
+            user="u",
+            password="p",
+            connect_attempts=3,
+            retry_backoff=0.5,
+        )
+
+        connector.connect()
+
+        assert connector.is_connected()
+        assert sleeps == [0.5, 1.0]
 
 
 class TestLifecycle:

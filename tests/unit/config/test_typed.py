@@ -357,6 +357,20 @@ class TestScopedModels:
 
         assert config.database == "local.db"
 
+    def test_scoped_override_coerces_retry_fields(self, postgres_yaml: Path) -> None:
+        config = load_config(
+            postgres_yaml,
+            model=PostgresConfig,
+            environ={
+                "READE__POSTGRES__CONNECT_ATTEMPTS": "3",
+                "READE__POSTGRES__CONNECT_TIMEOUT": "5",
+            },
+        )
+
+        assert config.connect_attempts == 3
+        assert config.connect_timeout == 5
+        assert config.retry_backoff == 0.5
+
     def test_mysql_scope_and_default_port(self, tmp_path: Path) -> None:
         file_path = tmp_path / "mysql.yaml"
         file_path.write_text(
