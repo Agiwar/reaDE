@@ -134,6 +134,18 @@ class TestScope:
 
         assert result == {"host": "localhost"}
 
+    def test_scoped_namespace_without_leaf_ignored(self) -> None:
+        # The literal "READE__POSTGRES__" has no key segment after the
+        # namespace; the length guard must drop it rather than insert an
+        # empty key.
+        data: dict[str, Any] = {"host": "localhost"}
+
+        result = merge_env_overrides(
+            data, {"READE__POSTGRES__": "value"}, scope="POSTGRES"
+        )
+
+        assert result == {"host": "localhost"}
+
     def test_none_scope_keeps_unscoped_behavior(self) -> None:
         data: dict[str, Any] = {"database": "local.db"}
 

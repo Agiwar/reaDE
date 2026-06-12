@@ -114,7 +114,7 @@ database: "local.db"
 
 ```bash
 # Deploy-time override — no file edit, no code change.
-export READE__DATABASE="/var/data/prod.db"
+export READE__SQLITE__DATABASE="/var/data/prod.db"
 ```
 
 ```python
@@ -136,13 +136,16 @@ with SqliteConnector(database=config.database) as connector:
   directory searched. The SDK reads no environment variables for file
   location — applications wanting an env-var convention pass
   `os.environ[...]` into `search_paths` themselves.
-- **Env overrides:** `READE__SECTION__KEY` variables override file values
-  (the only precedence rule). Values arrive as raw strings; the model
-  coerces and validates them. A typo'd variable fails loudly with a
-  field path — unknown fields are rejected. Overrides apply
-  process-wide to every `load_config` call by default; pass
-  `environ={}` to disable them for a call, or a filtered mapping to
-  scope which variables apply.
+- **Env overrides:** every model reads its own namespace —
+  `READE__<PREFIX>__KEY` (`SqliteConfig` → `READE__SQLITE__DATABASE`,
+  `PostgresConfig` → `READE__POSTGRES__HOST`) — and ignores variables
+  outside it, so several configs share one process environment without
+  collisions. An environment value overrides the file value (the only
+  precedence rule); values arrive as raw strings and the model coerces
+  and validates them. A typo'd variable inside the namespace fails
+  loudly with a field path — unknown fields are rejected. Pass
+  `environ={}` to disable overrides for a call, or a filtered mapping
+  to substitute the process environment.
 - **Validation failures** raise reaDE's own `ConfigError` carrying the
   field-path report; `ConfigLoader.load(path)` remains the untyped
   dict layer underneath.

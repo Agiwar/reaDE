@@ -37,13 +37,16 @@ def load_config[ModelT: BaseModel](
     env-var convention pass ``os.environ[...]`` into ``search_paths``
     themselves.
 
-    Override scoping: a model may declare a class-level ``env_prefix``
-    (``PostgresConfig`` declares ``"POSTGRES"``, ``MysqlConfig``
-    ``"MYSQL"``). When present, only ``READE__<PREFIX>__*`` variables
-    apply to that model — the prefix segment is stripped before the
-    merge, and everything outside it (including bare ``READE__*``
-    variables) is ignored. Models without a prefix (``SqliteConfig``)
-    keep the unscoped behavior.
+    Override scoping: a model may declare ``env_prefix`` as a non-empty
+    string ``ClassVar`` (the shipped models declare ``"SQLITE"``,
+    ``"POSTGRES"``, ``"MYSQL"``). When present, only
+    ``READE__<PREFIX>__*`` variables apply to that model — the prefix
+    segment is stripped before the merge, and everything outside it
+    (including bare ``READE__*`` variables) is ignored. Models without
+    an ``env_prefix`` get the unscoped behavior: every ``READE__*``
+    variable applies. This ClassVar is the extension contract for
+    third-party models; declaring it as a pydantic *field* is rejected
+    (it would silently change which variables apply).
 
     Args:
         name: Configuration file path or name to resolve.
@@ -67,7 +70,9 @@ def load_config[ModelT: BaseModel](
             (including ``FileNotFoundError`` for a missing absolute
             ``name``).
         ConfigError: If no loader is registered for the file's suffix, the
-            content cannot be parsed, or validation fails. Validation
+            content cannot be parsed, validation fails, or the model
+            declares an invalid ``env_prefix`` (a pydantic field instead
+            of a ClassVar, a non-string, or an empty string). Validation
             failures carry pydantic's field-path report in the message,
             with the original ``ValidationError`` attached as the cause
             (``raise ... from``).
@@ -79,6 +84,7 @@ def load_config[ModelT: BaseModel](
         unchanged — deliberately, since wrapping it would mask validator
         bugs as config errors.
     """
+    scope = _validated_env_prefix(model)
     path = _resolve_config_path(name, search_paths)
     try:
         file_type = FileType(path.suffix.lower())
@@ -87,7 +93,6 @@ def load_config[ModelT: BaseModel](
             f"No loader registered for file suffix {path.suffix!r}"
         ) from e
 
-    scope: str | None = getattr(model, "env_prefix", None)
     data = ConfigLoaderFactory.get_loader(file_type).load(path)
     data = merge_env_overrides(
         data, os.environ if environ is None else environ, scope=scope
@@ -96,6 +101,39 @@ def load_config[ModelT: BaseModel](
         return model.model_validate(data)
     except ValidationError as e:
         raise ConfigError(f"Invalid config {str(path)!r}:\n{e}") from e
+
+
+def _validated_env_prefix(model: type[BaseModel]) -> str | None:
+    """Return the model's ``env_prefix``, enforcing the ClassVar contract.
+
+    A prefix declared as a pydantic *field* is unreachable on the class
+    (pydantic removes field names from class attribute access), so the
+    scoping would silently fall back to unscoped behavior — the failure
+    mode this guard exists to make loud.
+
+    Args:
+        model: The model class whose prefix declaration to validate.
+
+    Returns:
+        The declared prefix, or ``None`` for unscoped models.
+
+    Raises:
+        ConfigError: If ``env_prefix`` is declared as a pydantic field,
+            is not a string, or is empty.
+    """
+    if "env_prefix" in model.model_fields:
+        raise ConfigError(
+            f"{model.__name__}.env_prefix must be a ClassVar, not a model "
+            "field — as a field it never reaches the scoping layer"
+        )
+    scope = getattr(model, "env_prefix", None)
+    if scope is None:
+        return None
+    if not isinstance(scope, str) or not scope:
+        raise ConfigError(
+            f"{model.__name__}.env_prefix must be a non-empty string, got {scope!r}"
+        )
+    return scope
 
 
 def _resolve_config_path(

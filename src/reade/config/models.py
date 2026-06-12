@@ -2,7 +2,7 @@
 
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SqliteConfig(BaseModel):
@@ -11,15 +11,20 @@ class SqliteConfig(BaseModel):
     Field values map directly onto ``SqliteConnector`` parameters; unpack
     them at the call site — connectors take plain parameters, never models.
 
-    Unknown fields are rejected (``extra="forbid"``), so a typo'd key — in
-    a config file or an environment override — fails validation with a
-    field path instead of being silently ignored.
+    Environment overrides are scoped: only ``READE__SQLITE__*`` variables
+    apply to this model (``READE__SQLITE__DATABASE`` overrides
+    ``database``), and variables outside the prefix — including bare
+    ``READE__*`` ones — are ignored. Scoping is what lets several models
+    share one process environment. Unknown fields, from the file or from
+    within the prefix, are rejected with a field path.
 
     Attributes:
         database: Path to the SQLite database file, or ``:memory:``.
     """
 
     model_config = ConfigDict(extra="forbid")
+
+    env_prefix: ClassVar[str] = "SQLITE"
 
     database: str
 
@@ -58,7 +63,7 @@ class PostgresConfig(BaseModel):
     host: str
     database: str
     user: str
-    password: str
+    password: str = Field(repr=False)
     port: int = 5432
     connect_timeout: int | None = None
     connect_attempts: int = 1
@@ -99,7 +104,7 @@ class MysqlConfig(BaseModel):
     host: str
     database: str
     user: str
-    password: str
+    password: str = Field(repr=False)
     port: int = 3306
     connect_timeout: int | None = None
     connect_attempts: int = 1

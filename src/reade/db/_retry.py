@@ -3,6 +3,8 @@
 import time
 from collections.abc import Callable
 
+_MAX_DELAY = 30.0
+
 
 def connect_with_retry[T](
     open_connection: Callable[[], T],
@@ -13,13 +15,20 @@ def connect_with_retry[T](
 ) -> T:
     """Call ``open_connection`` up to ``attempts`` times.
 
-    The delay before the second attempt is ``backoff`` seconds and
-    doubles after each subsequent failure. Only connection establishment
-    is ever retried — statement execution and health checks are not:
-    retrying execution repeats non-idempotent work, and a health check
-    that retries internally hides flapping from the caller. The final
-    failure is re-raised unchanged; mapping driver exceptions into
+    The delay before the second attempt is ``backoff`` seconds, doubling
+    after each subsequent failure, capped at 30 seconds so deploy-tuned
+    attempt counts cannot compound into unbounded sleeps. Only connection
+    establishment is ever retried — statement execution and health checks
+    are not: retrying execution repeats non-idempotent work, and a health
+    check that retries internally hides flapping from the caller. The
+    final failure is re-raised unchanged; mapping driver exceptions into
     ``DbError`` stays in the connector.
+
+    ``retry_on`` deliberately spans each driver's full error family,
+    permanent failures included — a bad password burns the configured
+    attempts before surfacing. Classifying transient vs. permanent per
+    driver is a taxonomy this helper does not attempt; bounded attempts
+    and the delay cap keep the worst case priced.
 
     Args:
         open_connection: Zero-argument callable that establishes and
@@ -47,5 +56,5 @@ def connect_with_retry[T](
             if attempt == attempts:
                 raise
             time.sleep(delay)
-            delay *= 2
+            delay = min(delay * 2, _MAX_DELAY)
     raise AssertionError("unreachable")  # pragma: no cover

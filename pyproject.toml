@@ -1,16 +1,17 @@
 [project]
 name = "reade"
 version = "0.1.0a1"
-description = "Lightweight data-engineering toolkit (MVP: core DB types)."
+description = "Data Engineering SDK with built-in Data Quality — connect, query, validate."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Jeffrey Li", email = "agiwar791005@gmail.com" }]
-keywords = ["data-engineering", "python-foundation", "de-sdk"]
+keywords = ["data-engineering", "data-quality", "database", "sql", "sdk"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
 ]
 
 dependencies = [
