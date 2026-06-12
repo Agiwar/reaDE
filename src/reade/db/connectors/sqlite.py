@@ -13,6 +13,13 @@ class SqliteConnector(ConnectionBase[sqlite3.Connection]):
     Zero-setup backend: connecting creates the database file if it does
     not exist; use ``:memory:`` for an in-memory database.
 
+    Connections are opened in autocommit mode: each ``execute()``
+    statement is atomic and immediately durable. Without it, the stdlib's
+    legacy transaction handling opens an implicit transaction before DML
+    and rolls it back at ``close()``, silently discarding file-backed
+    writes. Callers needing transactional control can manage it through
+    the ``connection`` property.
+
     Example:
         >>> with SqliteConnector(database=":memory:") as connector:
         ...     connector.ping()
@@ -39,7 +46,7 @@ class SqliteConnector(ConnectionBase[sqlite3.Connection]):
         if self._connection is not None:
             return
         try:
-            self._connection = sqlite3.connect(self._database)
+            self._connection = sqlite3.connect(self._database, autocommit=True)
         except sqlite3.Error as e:
             raise DbError(
                 f"Failed to connect to SQLite database {self._database!r}"

@@ -50,6 +50,17 @@ class TestSqliteConnector:
 
             assert connector.execute("SELECT id FROM t ORDER BY id") == [(1,), (2,)]
 
+    def test_execute_writes_survive_close_and_reopen(self, tmp_path: Path) -> None:
+        # Regression: legacy sqlite3 transaction handling rolled back
+        # file-backed DML at close(), silently discarding writes.
+        db_path = str(tmp_path / "durable.db")
+        with SqliteConnector(database=db_path) as connector:
+            connector.execute("CREATE TABLE t (id INTEGER)")
+            connector.execute("INSERT INTO t VALUES (1)")
+
+        with SqliteConnector(database=db_path) as connector:
+            assert connector.execute("SELECT COUNT(*) FROM t") == [(1,)]
+
     def test_execute_failure_raises_db_error_with_cause(self) -> None:
         with SqliteConnector(database=":memory:") as connector:
             with pytest.raises(DbError) as exc_info:
