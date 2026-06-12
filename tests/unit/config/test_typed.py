@@ -86,6 +86,17 @@ class TestLoadConfig:
         with pytest.raises(ConfigError, match="suffix"):
             load_config(file_path, model=SqliteConfig)
 
+    def test_valid_suffix_without_registered_loader_raises_config_error(
+        self, tmp_path: Path
+    ) -> None:
+        # .csv maps to a valid FileType but deliberately has no loader:
+        # exercises the factory's ConfigError branch through load_config.
+        file_path = tmp_path / "rules.csv"
+        file_path.write_text("a,b\n1,2\n", encoding="utf-8")
+
+        with pytest.raises(ConfigError, match="file type"):
+            load_config(file_path, model=SqliteConfig)
+
     def test_missing_file_passes_oserror_through(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
             load_config(tmp_path / "missing.yaml", model=SqliteConfig)
