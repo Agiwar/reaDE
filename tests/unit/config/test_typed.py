@@ -134,6 +134,84 @@ class TestLoadConfig:
             load_config(sqlite_yaml, model=SqliteConfig)
 
 
+class TestSearchPaths:
+    def test_first_hit_wins_in_tuple_order(self, tmp_path: Path) -> None:
+        first = tmp_path / "first"
+        second = tmp_path / "second"
+        for directory, value in ((first, "first.db"), (second, "second.db")):
+            directory.mkdir()
+            (directory / "db.yaml").write_text(
+                f'database: "{value}"\n', encoding="utf-8"
+            )
+
+        config = load_config(
+            "db.yaml", model=SqliteConfig, search_paths=(first, second)
+        )
+
+        assert config.database == "first.db"
+
+    def test_later_directory_used_when_earlier_misses(self, tmp_path: Path) -> None:
+        empty = tmp_path / "empty"
+        empty.mkdir()
+        hit = tmp_path / "hit"
+        hit.mkdir()
+        (hit / "db.yaml").write_text('database: "hit.db"\n', encoding="utf-8")
+
+        config = load_config("db.yaml", model=SqliteConfig, search_paths=(empty, hit))
+
+        assert config.database == "hit.db"
+
+    def test_absolute_path_bypasses_search(
+        self, sqlite_yaml: Path, tmp_path: Path
+    ) -> None:
+        elsewhere = tmp_path / "elsewhere"
+        elsewhere.mkdir()
+
+        config = load_config(sqlite_yaml, model=SqliteConfig, search_paths=(elsewhere,))
+
+        assert config.database == "local.db"
+
+    def test_miss_raises_file_not_found_listing_every_directory(
+        self, tmp_path: Path
+    ) -> None:
+        one = tmp_path / "one"
+        two = tmp_path / "two"
+        one.mkdir()
+        two.mkdir()
+
+        with pytest.raises(FileNotFoundError) as exc_info:
+            load_config("db.yaml", model=SqliteConfig, search_paths=(one, two))
+
+        message = str(exc_info.value)
+        assert str(one) in message
+        assert str(two) in message
+
+    def test_default_resolves_against_cwd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        (tmp_path / "db.yaml").write_text('database: "cwd.db"\n', encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+
+        config = load_config("db.yaml", model=SqliteConfig)
+
+        assert config.database == "cwd.db"
+
+    def test_relative_subpath_resolves_under_search_directory(
+        self, tmp_path: Path
+    ) -> None:
+        nested = tmp_path / "configs" / "prod"
+        nested.mkdir(parents=True)
+        (nested / "db.yaml").write_text('database: "nested.db"\n', encoding="utf-8")
+
+        config = load_config(
+            Path("prod") / "db.yaml",
+            model=SqliteConfig,
+            search_paths=(tmp_path / "configs",),
+        )
+
+        assert config.database == "nested.db"
+
+
 class TestSqliteConfig:
     def test_fields_unpack_as_plain_parameters(self, tmp_path: Path) -> None:
         file_path = tmp_path / "db.yaml"
