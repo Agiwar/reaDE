@@ -152,10 +152,12 @@ flow, including a rejected typo'd override.
 
 ## MVP Scope
 
-**Core (always installed):**
-- PostgreSQL (psycopg2)
-- MySQL (pymysql)
-- SQLite (stdlib)
+**Core database support** — the base install stays light; server drivers
+are opt-in extras:
+- SQLite — stdlib, no extra needed
+- PostgreSQL — `pip install 'reade[postgres]'` (psycopg 3)
+- MySQL — PyMySQL; the connector and its `reade[mysql]` extra land later
+  in Phase 1
 
 **Planned (not yet shipped):**
 - Trino (analytics engine connector)
