@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 
 from reade.config import SqliteConfig, load_config
 from reade.core.errors import ConfigError
+from reade.db import SqliteConnector
 
 
 class _PortModel(BaseModel):
@@ -95,8 +96,12 @@ class TestLoadConfig:
 
 
 class TestSqliteConfig:
-    def test_fields_unpack_as_plain_parameters(self) -> None:
-        config = SqliteConfig(database=":memory:")
+    def test_fields_unpack_as_plain_parameters(self, tmp_path: Path) -> None:
+        file_path = tmp_path / "db.yaml"
+        file_path.write_text('database: ":memory:"\n', encoding="utf-8")
 
-        assert config.database == ":memory:"
-        assert isinstance(config.database, str)
+        config = load_config(file_path, model=SqliteConfig)
+
+        # The connector takes the plain str — pydantic stops at config/.
+        with SqliteConnector(database=config.database) as connector:
+            assert connector.ping() is True

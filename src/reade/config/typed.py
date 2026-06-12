@@ -33,6 +33,13 @@ def load_config[ModelT: BaseModel](name: str | Path, *, model: type[ModelT]) -> 
             failures carry pydantic's field-path report in the message,
             with the original ``ValidationError`` attached as the cause
             (``raise ... from``).
+
+    Note:
+        pydantic turns only ``ValueError``/``AssertionError`` from a
+        model's own validators into ``ValidationError``. Any other
+        exception type raised by user-owned validator code propagates
+        unchanged — deliberately, since wrapping it would mask validator
+        bugs as config errors.
     """
     path = Path(name)
     try:
