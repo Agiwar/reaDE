@@ -12,6 +12,37 @@ jobs:
   ci:
     name: lint, type-check, test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: reade
+          POSTGRES_PASSWORD: reade  # pragma: allowlist secret — throwaway test-container credential
+          POSTGRES_DB: reade
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U reade"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_USER: reade
+          MYSQL_PASSWORD: reade  # pragma: allowlist secret — throwaway test-container credential
+          MYSQL_DATABASE: reade
+          MYSQL_ROOT_PASSWORD: reade  # pragma: allowlist secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -preade --silent"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      READE_TEST_POSTGRES_HOST: 127.0.0.1
+      READE_TEST_MYSQL_HOST: 127.0.0.1
     steps:
       - uses: actions/checkout@v6
 
@@ -32,6 +63,9 @@ jobs:
 
       - name: Tests (pytest)
         run: make test
+
+      - name: Integration tests ran (not skipped)
+        run: uv run pytest -m integration -rs | grep -E "[1-9][0-9]* passed"
 
       - name: End-to-end example
         run: uv run python examples/end_to_end.py
