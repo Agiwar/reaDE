@@ -94,7 +94,7 @@ from reade.dq import VolumeDimension
 |--------|--------|-------|
 | `core/` | ✅ API surface | Protocols, enums, errors, models, base ABCs |
 | `config/` | ✅ Hardened (1.1) | YAML / JSON → typed objects; search paths; env overrides |
-| `db/` | ✅ Thin slice | SQLite connect/close/ping; PostgreSQL / MySQL in Phase 1 |
+| `db/` | ✅ Hardened (1.2) | SQLite / PostgreSQL / MySQL; lifecycle, health check, connect retry; dockerized integration tests |
 | `sql/` | ✅ Thin slice | One Jinja2 template (`row_count`); discovery convention in Phase 2 |
 | `data_io/` | ✅ Thin slice | Execute query → rows; readers/writers (incl. CSV) in Phase 2 |
 | `validation/` | ✅ Thin slice | Row-count rule; more rules in Phase 3 |
@@ -152,6 +152,55 @@ with SqliteConnector(database=config.database) as connector:
 
 See [`examples/config_typed.py`](examples/config_typed.py) for the full
 flow, including a rejected typo'd override.
+
+## Database Connections
+
+Three connectors share one contract — connect, ping, execute, close —
+behind `ConnectionInterface`; server drivers install as extras
+(`reade[postgres]`, `reade[mysql]`, `reade[all]`).
+
+```python
+from reade.config import PostgresConfig, load_config
+from reade.db import PostgresConnector
+
+config = load_config("postgres.yaml", model=PostgresConfig)
+
+with PostgresConnector(
+    host=config.host,
+    database=config.database,
+    user=config.user,
+    password=config.password,
+    port=config.port,
+    connect_attempts=config.connect_attempts,  # retry is deploy-tunable
+) as connector:
+    connector.ping()                      # round-trip health check
+    rows = connector.execute("SELECT 1")  # [(1,)]
+```
+
+- **Every `execute()` is atomic and immediately durable, on every
+  backend.** Connections run in autocommit mode: no commit calls, a
+  failed statement cannot wedge the connection (health checks keep
+  working), and writes survive `close()`. Callers needing transactions
+  manage them through the `connection` property.
+- **Retry is connect-scoped only** — bounded attempts, doubling backoff
+  capped at 30s, optional per-attempt `connect_timeout` (set it on
+  PostgreSQL: libpq otherwise waits indefinitely). Statement execution
+  and `ping()` are never retried: retrying writes repeats non-idempotent
+  work, and a health check that retries stops being a measurement.
+- **Known limitations (v0.1.x):** no TLS or charset parameters yet — a
+  scheduled follow-up. Interim, PostgreSQL honors libpq's standard
+  [environment variables](https://www.postgresql.org/docs/current/libpq-envars.html)
+  (`PGSSLMODE`, `PGSSLROOTCERT`, …) for any parameter the connector does
+  not set explicitly; MySQL over TLS is not yet reachable.
+- The `postgres` extra pins `psycopg[binary]` (bundled libpq) so the
+  install works without system PostgreSQL libraries; the trade-off is
+  that libpq security updates arrive with psycopg releases rather than
+  through your OS package manager.
+
+See [`examples/db_typed.py`](examples/db_typed.py) for the full chain —
+scoped config, override namespacing, and the connector lifecycle against
+a real server (CI runs it against a dockerized PostgreSQL; locally, start
+`tests/integration/compose.yaml`).
 
 ## MVP Scope
 
