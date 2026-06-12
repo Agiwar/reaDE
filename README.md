@@ -93,7 +93,7 @@ from reade.dq import VolumeDimension
 | Module | Status | Notes |
 |--------|--------|-------|
 | `core/` | ✅ API surface | Protocols, enums, errors, models, base ABCs |
-| `config/` | ✅ Thin slice | YAML → `dict`; JSON + typed objects in Phase 1 |
+| `config/` | ✅ Hardened (1.1) | YAML / JSON → typed objects; search paths; env overrides |
 | `db/` | ✅ Thin slice | SQLite connect/close/ping; PostgreSQL / MySQL in Phase 1 |
 | `sql/` | ✅ Thin slice | One Jinja2 template (`row_count`); discovery convention in Phase 2 |
 | `data_io/` | ✅ Thin slice | Execute query → rows; readers/writers (incl. CSV) in Phase 2 |
@@ -101,6 +101,54 @@ from reade.dq import VolumeDimension
 | `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
 
 Earlier prototype implementations are being re-landed sprint by sprint.
+
+## Configuration
+
+Config files validate into typed objects at the `config/` boundary;
+everything past it takes plain parameters.
+
+```yaml
+# db.yaml
+database: "local.db"
+```
+
+```bash
+# Deploy-time override — no file edit, no code change.
+export READE__DATABASE="/var/data/prod.db"
+```
+
+```python
+from reade.config import SqliteConfig, load_config
+from reade.db import SqliteConnector
+
+# resolve → parse → env overrides → validate
+config = load_config("db.yaml", model=SqliteConfig)
+
+with SqliteConnector(database=config.database) as connector:
+    print(connector.ping())  # True
+```
+
+- **Formats:** YAML (`.yaml` / `.yml`) and JSON (`.json`). CSV is data,
+  not config — it arrives as a `data_io` reader in Phase 2.
+- **Resolution:** a relative name is tried against `search_paths` in
+  order (default: the current working directory only); absolute paths
+  bypass the search; a miss raises `FileNotFoundError` listing every
+  directory searched. The SDK reads no environment variables for file
+  location — applications wanting an env-var convention pass
+  `os.environ[...]` into `search_paths` themselves.
+- **Env overrides:** `READE__SECTION__KEY` variables override file values
+  (the only precedence rule). Values arrive as raw strings; the model
+  coerces and validates them. A typo'd variable fails loudly with a
+  field path — unknown fields are rejected. Overrides apply
+  process-wide to every `load_config` call by default; pass
+  `environ={}` to disable them for a call, or a filtered mapping to
+  scope which variables apply.
+- **Validation failures** raise reaDE's own `ConfigError` carrying the
+  field-path report; `ConfigLoader.load(path)` remains the untyped
+  dict layer underneath.
+
+See [`examples/config_typed.py`](examples/config_typed.py) for the full
+flow, including a rejected typo'd override.
 
 ## MVP Scope
 
