@@ -72,7 +72,7 @@ usable release — this closes the "everything 30%, nothing shippable" risk.
 ### Phase 1 — config + db hardening → `v0.1.0`
 
 **Sprint 1.1 — config**
-- JSON / YAML / CSV loaders, auto-locate, env-var overrides
+- JSON / YAML loaders, auto-locate, env-var overrides
 - Typed config objects (decide: pydantic vs. stdlib dataclasses — record the
   decision and rationale in the PR)
 - DoD: ≥90% coverage on module; README section; example
@@ -98,6 +98,8 @@ usable release — this closes the "everything 30%, nothing shippable" risk.
 **Sprint 2.2 — data_io**
 - Execute query / read / write; streaming vs. materialized results
 - Consistent error mapping into `core.errors`
+- CSV reader (relocated from config — CSV is data, not config; see PR #7's
+  design notes)
 
 **Gate → tag `v0.2.0`.**
 
