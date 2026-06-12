@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: reade
+      POSTGRES_PASSWORD: reade  # pragma: allowlist secret — throwaway test-container credential
+      POSTGRES_DB: reade
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reade"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_USER: reade
+      MYSQL_PASSWORD: reade  # pragma: allowlist secret — throwaway test-container credential
+      MYSQL_DATABASE: reade
+      MYSQL_ROOT_PASSWORD: reade  # pragma: allowlist secret
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -preade --silent"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
