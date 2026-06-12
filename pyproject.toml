@@ -20,10 +20,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
 dev = [
     # Testing
     "pytest",
     "pytest-cov",
+
+    # Drivers (typing + integration tests; users install via extras)
+    "psycopg[binary]>=3.2",
 
     # Linting & formatting
     "ruff",
