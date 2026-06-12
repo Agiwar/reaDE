@@ -91,3 +91,52 @@ class TestMergeEnvOverrides:
         result = merge_env_overrides({}, environ)
 
         assert result == {"db": {"host": "db.internal"}}
+
+
+class TestScope:
+    def test_scoped_variable_applies_with_segment_stripped(self) -> None:
+        data: dict[str, Any] = {"host": "localhost"}
+
+        result = merge_env_overrides(
+            data, {"READE__POSTGRES__HOST": "db.internal"}, scope="POSTGRES"
+        )
+
+        assert result == {"host": "db.internal"}
+
+    def test_out_of_scope_variables_ignored(self) -> None:
+        data: dict[str, Any] = {"host": "localhost", "database": "app"}
+        environ = {
+            "READE__DATABASE": "bare-flat-var",
+            "READE__MYSQL__HOST": "other-scope",
+            "READE__POSTGRES": "no-trailing-segment",
+        }
+
+        result = merge_env_overrides(data, environ, scope="POSTGRES")
+
+        assert result == data
+        assert result is not data
+
+    def test_scope_preserves_nesting_below_the_segment(self) -> None:
+        data: dict[str, Any] = {"pool": {"size": 5}}
+
+        result = merge_env_overrides(
+            data, {"READE__POSTGRES__POOL__SIZE": "10"}, scope="POSTGRES"
+        )
+
+        assert result == {"pool": {"size": "10"}}
+
+    def test_scope_segment_matches_exactly(self) -> None:
+        data: dict[str, Any] = {"host": "localhost"}
+
+        result = merge_env_overrides(
+            data, {"READE__postgres__HOST": "db.internal"}, scope="POSTGRES"
+        )
+
+        assert result == {"host": "localhost"}
+
+    def test_none_scope_keeps_unscoped_behavior(self) -> None:
+        data: dict[str, Any] = {"database": "local.db"}
+
+        result = merge_env_overrides(data, {"READE__DATABASE": "prod.db"}, scope=None)
+
+        assert result == {"database": "prod.db"}

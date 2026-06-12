@@ -6,14 +6,15 @@ The typed layer is additive: it composes the frozen dict contract
 never escapes config/.
 """
 
+from inspect import signature
 from pathlib import Path
 
 import pytest
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from reade.config import SqliteConfig, load_config
+from reade.config import MysqlConfig, PostgresConfig, SqliteConfig, load_config
 from reade.core.errors import ConfigError
-from reade.db import SqliteConnector
+from reade.db import MysqlConnector, PostgresConnector, SqliteConnector
 
 
 class _PortModel(BaseModel):
@@ -254,3 +255,137 @@ class TestSqliteConfig:
         # The connector takes the plain str — pydantic stops at config/.
         with SqliteConnector(database=config.database) as connector:
             assert connector.ping() is True
+
+
+class TestScopedModels:
+    @pytest.fixture
+    def postgres_yaml(self, tmp_path: Path) -> Path:
+        file_path = tmp_path / "postgres.yaml"
+        file_path.write_text(
+            'host: "db.internal"\n'
+            'database: "app"\n'
+            'user: "role"\n'
+            'password: "from-file"\n',  # pragma: allowlist secret
+            encoding="utf-8",
+        )
+        return file_path
+
+    def test_scoped_override_applies_and_coerces(self, postgres_yaml: Path) -> None:
+        config = load_config(
+            postgres_yaml,
+            model=PostgresConfig,
+            environ={"READE__POSTGRES__PORT": "6543"},
+        )
+
+        assert config.port == 6543
+
+    def test_port_defaults_match_the_backend(self, postgres_yaml: Path) -> None:
+        config = load_config(postgres_yaml, model=PostgresConfig, environ={})
+
+        assert config.port == 5432
+
+    def test_out_of_scope_variables_are_ignored(self, postgres_yaml: Path) -> None:
+        config = load_config(
+            postgres_yaml,
+            model=PostgresConfig,
+            environ={
+                "READE__DATABASE": "stray-flat-var",
+                "READE__MYSQL__HOST": "other-model",
+            },
+        )
+
+        assert config.database == "app"
+        assert config.host == "db.internal"
+
+    def test_typo_inside_scope_fails_loudly_with_field_path(
+        self, postgres_yaml: Path
+    ) -> None:
+        with pytest.raises(ConfigError, match="hostt"):
+            load_config(
+                postgres_yaml,
+                model=PostgresConfig,
+                environ={"READE__POSTGRES__HOSTT": "oops"},
+            )
+
+    def test_scoped_models_coexist_in_one_environment(
+        self, postgres_yaml: Path, tmp_path: Path
+    ) -> None:
+        # The collision the 1.1 review deferred to this sprint: one
+        # process, several models, each other's variables present.
+        environ = {
+            "READE__DATABASE": "stray-flat-var",
+            "READE__POSTGRES__HOST": "pg-from-env",
+            "READE__MYSQL__HOST": "mysql-from-env",
+        }
+        mysql_yaml = tmp_path / "mysql.yaml"
+        mysql_yaml.write_text(
+            'host: "db.internal"\n'
+            'database: "app"\n'
+            'user: "role"\n'
+            'password: "from-file"\n',  # pragma: allowlist secret
+            encoding="utf-8",
+        )
+
+        postgres_config = load_config(
+            postgres_yaml, model=PostgresConfig, environ=environ
+        )
+        mysql_config = load_config(mysql_yaml, model=MysqlConfig, environ=environ)
+
+        # Each scoped model reads its own namespace and nothing else.
+        assert postgres_config.host == "pg-from-env"
+        assert postgres_config.database == "app"
+        assert mysql_config.host == "mysql-from-env"
+        assert mysql_config.database == "app"
+
+    def test_grandfathered_unscoped_model_fails_loudly_on_foreign_scope(
+        self, tmp_path: Path
+    ) -> None:
+        # The recorded cost of grandfathering the flat convention:
+        # SqliteConfig declares no prefix, so it still sees every
+        # READE__* variable — a scoped variable for another model fails
+        # it loudly (never silently) ...
+        sqlite_yaml = tmp_path / "db.yaml"
+        sqlite_yaml.write_text('database: "local.db"\n', encoding="utf-8")
+        environ = {"READE__POSTGRES__HOST": "pg-from-env"}
+
+        with pytest.raises(ConfigError, match="postgres"):
+            load_config(sqlite_yaml, model=SqliteConfig, environ=environ)
+
+        # ... and the documented per-call mitigation (a filtered
+        # mapping) restores it.
+        config = load_config(sqlite_yaml, model=SqliteConfig, environ={})
+
+        assert config.database == "local.db"
+
+    def test_mysql_scope_and_default_port(self, tmp_path: Path) -> None:
+        file_path = tmp_path / "mysql.yaml"
+        file_path.write_text(
+            'host: "db.internal"\n'
+            'database: "app"\n'
+            'user: "role"\n'
+            'password: "from-file"\n',  # pragma: allowlist secret
+            encoding="utf-8",
+        )
+
+        config = load_config(
+            file_path, model=MysqlConfig, environ={"READE__MYSQL__PORT": "3307"}
+        )
+
+        assert config.port == 3307
+
+    def test_model_fields_mirror_connector_parameters(self) -> None:
+        # D-record contract: flat model fields map one-to-one onto the
+        # consumer connector's constructor parameters.
+        pairs = (
+            (PostgresConfig, PostgresConnector),
+            (MysqlConfig, MysqlConnector),
+            (SqliteConfig, SqliteConnector),
+        )
+        for model, connector in pairs:
+            parameters = [
+                name
+                for name in signature(connector.__init__).parameters
+                if name != "self"
+            ]
+
+            assert sorted(model.model_fields) == sorted(parameters)
