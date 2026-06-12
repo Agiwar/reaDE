@@ -1,6 +1,6 @@
 """PostgreSQL database connector."""
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from reade.core.base.connector import ConnectionBase
 from reade.core.errors.db import DbError
@@ -174,7 +174,13 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         """
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute(sql)
+                # psycopg types queries as LiteralString (PEP 675) to
+                # steer callers toward static SQL; this seam's frozen
+                # contract takes runtime str — parameter safety is
+                # Phase 2 scope. The cast bridges checkers that enforce
+                # the literal-only signature (pyright); mypy accepts the
+                # call either way.
+                cursor.execute(cast("Any", sql))
                 # Fetching after a statement with no result set raises in
                 # psycopg (unlike sqlite3); description is the seam-safe
                 # signal that rows exist.
