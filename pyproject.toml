@@ -1,6 +1,6 @@
 [project]
 name = "reade"
-version = "0.1.0"
+version = "0.1.0a1"
 description = "Lightweight data-engineering toolkit (MVP: core DB types)."
 readme = "README.md"
 requires-python = ">=3.12"
