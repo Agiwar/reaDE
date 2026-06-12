@@ -105,6 +105,34 @@ class TestLoadConfig:
         with pytest.raises(ConfigError):
             load_config(invalid_yaml_file, model=SqliteConfig)
 
+    def test_env_override_beats_file_value(
+        self, sqlite_yaml: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("READE__DATABASE", "from-env.db")
+
+        config = load_config(sqlite_yaml, model=SqliteConfig)
+
+        assert config.database == "from-env.db"
+
+    def test_env_override_string_coerces_during_validation(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        file_path = tmp_path / "server.yaml"
+        file_path.write_text("port: 5432\n", encoding="utf-8")
+        monkeypatch.setenv("READE__PORT", "6543")
+
+        config = load_config(file_path, model=_PortModel)
+
+        assert config.port == 6543
+
+    def test_typo_in_env_override_fails_loudly_with_field_path(
+        self, sqlite_yaml: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("READE__DATABSE", "oops")
+
+        with pytest.raises(ConfigError, match="databse"):
+            load_config(sqlite_yaml, model=SqliteConfig)
+
 
 class TestSqliteConfig:
     def test_fields_unpack_as_plain_parameters(self, tmp_path: Path) -> None:
