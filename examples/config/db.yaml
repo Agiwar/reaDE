@@ -1,0 +1,3 @@
+db:
+  # SQLite needs only a database path; ":memory:" keeps the example self-contained.
+  database: ":memory:"

@@ -4,10 +4,11 @@ from reade.core.errors.base import ReadeError
 
 
 class DbError(ReadeError):
-    """Raised when a database connection operation fails.
+    """Raised when a database operation fails at the driver boundary.
 
-    Covers the connection lifecycle: connect, health check, and close.
-    Connectors map driver-specific exceptions into this error.
+    Covers the connection lifecycle (connect, health check, close) and
+    statement execution. Connectors map driver-specific exceptions into
+    this error.
     """
 
 

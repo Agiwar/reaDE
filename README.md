@@ -72,30 +72,35 @@ reaDE is pre-alpha, being rebuilt as a [walking skeleton](DEVELOPMENT_PLAN.md):
 the public API surface in `core/` lands first, then thin implementations of
 the whole chain, then each module is hardened in release-gated sprints.
 
-What exists today is the `core/` contract layer:
+The entire chain now runs end-to-end against SQLite — see
+[`examples/end_to_end.py`](examples/end_to_end.py):
 
 ```python
-from reade.core.enums import DbType, FileType
-from reade.core.errors import ConfigError, DbError, ReadeError
-from reade.core.interfaces import ConfigLoader, ConnectionInterface
-from reade.core.models import DB_METADATA_REGISTRY, DbMetadata
+from reade.config import ConfigLoaderFactory, YamlLoader
+from reade.db import SqliteConnector
+from reade.sql import render_template
+from reade.data_io import execute_query
+from reade.validation import RowCountRule
+from reade.dq import VolumeDimension
 ```
+
+> **Alpha caveat:** SQL templating interpolates identifiers (e.g.
+> `{{ table }}`) without sanitization — parameter safety is Phase 2
+> scope. Do not render templates with untrusted input.
 
 ### Module Status
 
 | Module | Status | Notes |
 |--------|--------|-------|
-| `core/` | ✅ API surface | Protocols, enums, errors, models |
-| `config/` | 📋 Sprint 0.2 | YAML first; JSON / CSV follow in Phase 1 |
-| `db/` | 📋 Sprint 0.2 | SQLite first; PostgreSQL / MySQL in Phase 1 |
-| `sql/` | 📋 Sprint 0.2 | Jinja2 template rendering |
-| `data_io/` | 📋 Sprint 0.2 | SQL execution, readers/writers |
-| `validation/` | 📋 Sprint 0.2 | Row-count rule first; more rules in Phase 3 |
-| `dq/` | 📋 Sprint 0.2 | Volume dimension first; more dims in Phase 3 |
+| `core/` | ✅ API surface | Protocols, enums, errors, models, base ABCs |
+| `config/` | ✅ Thin slice | YAML → `dict`; JSON / CSV + typed objects in Phase 1 |
+| `db/` | ✅ Thin slice | SQLite connect/close/ping; PostgreSQL / MySQL in Phase 1 |
+| `sql/` | ✅ Thin slice | One Jinja2 template (`row_count`); discovery convention in Phase 2 |
+| `data_io/` | ✅ Thin slice | Execute query → rows; readers/writers in Phase 2 |
+| `validation/` | ✅ Thin slice | Row-count rule; more rules in Phase 3 |
+| `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
 
-Earlier prototype implementations are parked on the
-[`archive/pre-skeleton`](https://github.com/Agiwar/reaDE/tree/archive/pre-skeleton)
-branch and will be re-landed sprint by sprint.
+Earlier prototype implementations are being re-landed sprint by sprint.
 
 ## MVP Scope
 
@@ -142,16 +147,23 @@ parse   connect  render  execute    validate   aggregate
 
 ```
 src/reade/
-└── core/           # Shared foundation (the frozen public API surface)
-    ├── enums/      # DbType, FileType
-    ├── errors/     # Exception hierarchy rooted at ReadeError
-    ├── interfaces/ # Protocol definitions (contracts)
-    └── models/     # Shared data models (DbMetadata)
+├── core/           # Shared foundation (the frozen public API surface)
+│   ├── base/       # ABCs with shared behavior (ConnectionBase, FileLoaderBase)
+│   ├── enums/      # DbType, FileType
+│   ├── errors/     # Exception hierarchy rooted at ReadeError
+│   ├── interfaces/ # Protocol definitions (contracts)
+│   └── models/     # Shared data models (DbMetadata)
+├── config/         # YAML loader + loader factory
+├── db/             # SQLite connector
+├── sql/            # Jinja2 template rendering + packaged templates
+├── data_io/        # Query execution
+├── validation/     # Row-count rule
+└── dq/             # Volume dimension
 ```
 
-Feature modules (`config/`, `db/`, `sql/`, `data_io/`, `validation/`, `dq/`)
-are added sprint by sprint — see [ARCHITECTURE.md](ARCHITECTURE.md) for the
-target layout and dependency chain.
+Each feature module is a thin slice that deepens in its hardening sprint —
+see [ARCHITECTURE.md](ARCHITECTURE.md) for the target layout and dependency
+chain.
 
 ## Development
 

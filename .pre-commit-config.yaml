@@ -2,28 +2,31 @@
 # See https://pre-commit.com for more information
 
 repos:
-  # Ruff - Ultra-fast Python linter and formatter
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.0
+  # Project-env hooks: same tool versions as CI (uv.lock), no rev skew
+  - repo: local
     hooks:
       - id: ruff
-        args: [--fix]
+        name: ruff (project env)
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
       - id: ruff-format
-
-  # Mypy - Static type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.0
-    hooks:
+        name: ruff-format (project env)
+        entry: uv run ruff format
+        language: system
+        types: [python]
       - id: mypy
-        args: [--ignore-missing-imports]
-
-  # Bandit - Security linter
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.9
-    hooks:
+        name: mypy (project env)
+        entry: uv run mypy src tests
+        language: system
+        types: [python]
+        pass_filenames: false
       - id: bandit
-        args: [-c, pyproject.toml]
-        additional_dependencies: ["bandit[toml]"]
+        name: bandit (project env)
+        entry: uv run bandit -c pyproject.toml -r src
+        language: system
+        types: [python]
+        pass_filenames: false
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -50,6 +53,5 @@ repos:
           (?x)^(
             .*\.lock\.json$|
             .*\.env\.example$|
-            tests/fixtures/.*|
-            examples/.*\.py$
+            tests/fixtures/.*
           )$
