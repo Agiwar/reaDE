@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from reade.core.base.connector import ConnectionBase
 from reade.core.errors.db import DbError
+from reade.db._retry import connect_with_retry
 
 if TYPE_CHECKING:
     import pymysql
@@ -26,6 +27,9 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
     Callers needing transactional control can manage it through the
     ``connection`` property.
 
+    Transient connect failures can be retried (``connect_attempts`` /
+    ``retry_backoff``); ``execute()`` and ``ping()`` are never retried.
+
     Example:
         >>> with MysqlConnector(
         ...     host="localhost", database="app", user="app", password="..."
@@ -41,6 +45,9 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
         user: str,
         password: str,
         port: int = 3306,
+        connect_timeout: int | None = None,
+        connect_attempts: int = 1,
+        retry_backoff: float = 0.5,
     ) -> None:
         """Initialize the connector.
 
@@ -50,47 +57,75 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
             user: Login user name.
             password: Login password.
             port: Server port. Defaults to MySQL's standard 3306.
+            connect_timeout: Per-attempt connection timeout in seconds.
+                ``None`` keeps the driver default — pymysql uses 10
+                seconds.
+            connect_attempts: Total connect() attempts; 1 (the default)
+                means no retry.
+            retry_backoff: Delay before the second attempt, in seconds;
+                doubles after each subsequent failure.
 
         Raises:
             ImportError: If the ``pymysql`` driver is not installed
                 (install the ``mysql`` extra).
+            ValueError: If ``connect_attempts`` is less than 1.
         """
         super().__init__()
         if pymysql is None:
             raise ImportError(
                 "MySQL support requires the 'mysql' extra: pip install 'reade[mysql]'"
             )
+        if connect_attempts < 1:
+            raise ValueError(f"connect_attempts must be >= 1, got {connect_attempts}")
         self._host = host
         self._database = database
         self._user = user
         self._password = password
         self._port = port
+        self._connect_timeout = connect_timeout
+        self._connect_attempts = connect_attempts
+        self._retry_backoff = retry_backoff
 
     def connect(self) -> None:
-        """Establish the connection.
+        """Establish the connection, retrying transient failures.
 
-        Connecting an already-connected connector is a no-op.
+        Connecting an already-connected connector is a no-op. Failed
+        attempts are retried up to ``connect_attempts`` with doubling
+        backoff; only connection establishment is retried, never
+        statement execution.
 
         Raises:
             DbError: If the server cannot be reached or rejects the
-                connection.
+                connection on the final attempt.
         """
         if self._connection is not None:
             return
         try:
-            self._connection = pymysql.connect(
-                host=self._host,
-                port=self._port,
-                database=self._database,
-                user=self._user,
-                password=self._password,
-                autocommit=True,
+            self._connection = connect_with_retry(
+                self._open,
+                attempts=self._connect_attempts,
+                backoff=self._retry_backoff,
+                retry_on=(pymysql.MySQLError,),
             )
         except pymysql.MySQLError as e:
             raise DbError(
                 f"Failed to connect to MySQL database {self._database!r} "
                 f"at {self._host}:{self._port}"
             ) from e
+
+    def _open(self) -> "pymysql.connections.Connection[Any]":
+        """Open one driver connection (a single attempt, no mapping)."""
+        kwargs: dict[str, Any] = {
+            "host": self._host,
+            "port": self._port,
+            "database": self._database,
+            "user": self._user,
+            "password": self._password,
+            "autocommit": True,
+        }
+        if self._connect_timeout is not None:
+            kwargs["connect_timeout"] = self._connect_timeout
+        return pymysql.connect(**kwargs)
 
     def close(self) -> None:
         """Close the connection.

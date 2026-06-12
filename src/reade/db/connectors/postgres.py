@@ -1,9 +1,10 @@
 """PostgreSQL database connector."""
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from reade.core.base.connector import ConnectionBase
 from reade.core.errors.db import DbError
+from reade.db._retry import connect_with_retry
 
 if TYPE_CHECKING:
     import psycopg
@@ -26,6 +27,9 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
     health checks. Callers needing transactional control can manage it
     through the ``connection`` property.
 
+    Transient connect failures can be retried (``connect_attempts`` /
+    ``retry_backoff``); ``execute()`` and ``ping()`` are never retried.
+
     Example:
         >>> with PostgresConnector(
         ...     host="localhost", database="app", user="app", password="..."
@@ -41,6 +45,9 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         user: str,
         password: str,
         port: int = 5432,
+        connect_timeout: int | None = None,
+        connect_attempts: int = 1,
+        retry_backoff: float = 0.5,
     ) -> None:
         """Initialize the connector.
 
@@ -50,10 +57,19 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
             user: Login role name.
             password: Login password.
             port: Server port. Defaults to PostgreSQL's standard 5432.
+            connect_timeout: Per-attempt connection timeout in seconds.
+                ``None`` keeps the driver default — libpq waits
+                indefinitely, so bounded retry *time* (not just bounded
+                attempts) requires setting this.
+            connect_attempts: Total connect() attempts; 1 (the default)
+                means no retry.
+            retry_backoff: Delay before the second attempt, in seconds;
+                doubles after each subsequent failure.
 
         Raises:
             ImportError: If the ``psycopg`` driver is not installed
                 (install the ``postgres`` extra).
+            ValueError: If ``connect_attempts`` is less than 1.
         """
         super().__init__()
         if psycopg is None:
@@ -61,37 +77,57 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
                 "PostgreSQL support requires the 'postgres' extra: "
                 "pip install 'reade[postgres]'"
             )
+        if connect_attempts < 1:
+            raise ValueError(f"connect_attempts must be >= 1, got {connect_attempts}")
         self._host = host
         self._database = database
         self._user = user
         self._password = password
         self._port = port
+        self._connect_timeout = connect_timeout
+        self._connect_attempts = connect_attempts
+        self._retry_backoff = retry_backoff
 
     def connect(self) -> None:
-        """Establish the connection.
+        """Establish the connection, retrying transient failures.
 
-        Connecting an already-connected connector is a no-op.
+        Connecting an already-connected connector is a no-op. Failed
+        attempts are retried up to ``connect_attempts`` with doubling
+        backoff; only connection establishment is retried, never
+        statement execution.
 
         Raises:
             DbError: If the server cannot be reached or rejects the
-                connection.
+                connection on the final attempt.
         """
         if self._connection is not None:
             return
         try:
-            self._connection = psycopg.connect(
-                host=self._host,
-                port=self._port,
-                dbname=self._database,
-                user=self._user,
-                password=self._password,
-                autocommit=True,
+            self._connection = connect_with_retry(
+                self._open,
+                attempts=self._connect_attempts,
+                backoff=self._retry_backoff,
+                retry_on=(psycopg.Error,),
             )
         except psycopg.Error as e:
             raise DbError(
                 f"Failed to connect to PostgreSQL database {self._database!r} "
                 f"at {self._host}:{self._port}"
             ) from e
+
+    def _open(self) -> "psycopg.Connection[tuple[Any, ...]]":
+        """Open one driver connection (a single attempt, no mapping)."""
+        kwargs: dict[str, Any] = {
+            "host": self._host,
+            "port": self._port,
+            "dbname": self._database,
+            "user": self._user,
+            "password": self._password,
+            "autocommit": True,
+        }
+        if self._connect_timeout is not None:
+            kwargs["connect_timeout"] = self._connect_timeout
+        return psycopg.connect(**kwargs)
 
     def close(self) -> None:
         """Close the connection.
@@ -138,7 +174,13 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         """
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute(sql)
+                # psycopg types queries as LiteralString (PEP 675) to
+                # steer callers toward static SQL; this seam's frozen
+                # contract takes runtime str — parameter safety is
+                # Phase 2 scope. The cast bridges checkers that enforce
+                # the literal-only signature (pyright); mypy accepts the
+                # call either way.
+                cursor.execute(cast("Any", sql))
                 # Fetching after a statement with no result set raises in
                 # psycopg (unlike sqlite3); description is the seam-safe
                 # signal that rows exist.
