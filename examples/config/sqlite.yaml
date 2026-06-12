@@ -1,0 +1,2 @@
+# Typed-config example: SqliteConfig validates this mapping.
+database: "local.db"
