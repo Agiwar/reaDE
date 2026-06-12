@@ -1,5 +1,7 @@
 """Typed loading layer on top of the frozen dict-based loaders."""
 
+import os
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
@@ -14,7 +16,8 @@ def load_config[ModelT: BaseModel](
     name: str | Path,
     *,
     model: type[ModelT],
-    search_paths: tuple[Path, ...] | None = None,
+    search_paths: Sequence[str | Path] | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> ModelT:
     """Load a configuration file and validate it into a typed model.
 
@@ -37,8 +40,14 @@ def load_config[ModelT: BaseModel](
     Args:
         name: Configuration file path or name to resolve.
         model: The pydantic model class to validate the content against.
-        search_paths: Directories to try for a relative ``name``, in
-            order. Defaults to ``(Path.cwd(),)``, resolved at call time.
+        search_paths: Directories (``str`` or ``Path``) to try for a
+            relative ``name``, in order. Defaults to the current working
+            directory, resolved at call time.
+        environ: Environment mapping consulted for ``READE__`` overrides.
+            Defaults to ``os.environ``, where overrides apply
+            process-wide — every ``load_config`` call sees the same
+            ``READE__*`` variables. Pass ``{}`` to disable overrides for
+            a call, or a filtered mapping to scope which variables apply.
 
     Returns:
         A validated instance of ``model``.
@@ -71,7 +80,7 @@ def load_config[ModelT: BaseModel](
         ) from e
 
     data = ConfigLoaderFactory.get_loader(file_type).load(path)
-    data = merge_env_overrides(data)
+    data = merge_env_overrides(data, os.environ if environ is None else environ)
     try:
         return model.model_validate(data)
     except ValidationError as e:
@@ -79,7 +88,7 @@ def load_config[ModelT: BaseModel](
 
 
 def _resolve_config_path(
-    name: str | Path, search_paths: tuple[Path, ...] | None
+    name: str | Path, search_paths: Sequence[str | Path] | None
 ) -> Path:
     """Resolve a config file name against the search paths.
 
@@ -100,7 +109,11 @@ def _resolve_config_path(
     if path.is_absolute():
         return path
 
-    directories = search_paths if search_paths is not None else (Path.cwd(),)
+    directories = (
+        [Path(directory) for directory in search_paths]
+        if search_paths is not None
+        else [Path.cwd()]
+    )
     for directory in directories:
         candidate = directory / path
         if candidate.is_file():

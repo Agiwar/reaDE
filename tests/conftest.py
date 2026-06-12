@@ -1,8 +1,16 @@
 """Shared test fixtures."""
 
+import os
 from pathlib import Path
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _isolate_reade_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Strip READE__* variables so a developer's shell cannot poison tests."""
+    for name in [var for var in os.environ if var.startswith("READE__")]:
+        monkeypatch.delenv(name)
 
 
 @pytest.fixture

@@ -22,7 +22,10 @@ def merge_env_overrides(
     inserted as raw strings: type coercion and error reporting are the
     typed layer's job during validation, never this function's.
     Precedence: an environment value overrides the file value — the only
-    precedence rule.
+    precedence rule. Variables apply in sorted name order, so when one
+    override's path prefixes another's (``READE__DB`` and
+    ``READE__DB__HOST``) the deeper path lands last and wins where they
+    overlap, regardless of environment iteration order.
 
     The merge is pure: ``data`` is not mutated. Keys with no
     case-insensitive match are inserted lowercased, so env-only values
@@ -41,7 +44,7 @@ def merge_env_overrides(
         A new dictionary with the overrides applied.
     """
     result = copy.deepcopy(data)
-    for var, value in environ.items():
+    for var, value in sorted(environ.items()):
         if not var.startswith(_PREFIX):
             continue
         *parents, leaf = var.removeprefix(_PREFIX).split(_DELIMITER)
