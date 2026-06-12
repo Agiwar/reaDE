@@ -73,5 +73,11 @@ jobs:
       - name: Typed-config example
         run: uv run python examples/config_typed.py
 
+      - name: Server-backed example
+        run: uv run python examples/db_typed.py
+
       - name: Config module coverage gate (>=90%)
         run: uv run pytest --cov=reade.config --cov-fail-under=90 -q
+
+      - name: Db module coverage gate (>=90%)
+        run: uv run pytest --cov=reade.db --cov-fail-under=90 -q
