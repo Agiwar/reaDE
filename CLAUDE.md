@@ -48,3 +48,5 @@ scope only if the current sprint's DoD covers it.
   `ci/`.
 - Commit messages: high-level what/why, no file listings, no generated-by
   footers.
+- No attribution footers in PR bodies either (no "Generated with" badges, no
+  Co-Authored-By trailers): the tracked CLAUDE.md is the disclosure.
