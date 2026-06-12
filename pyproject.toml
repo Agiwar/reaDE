@@ -21,6 +21,8 @@ dependencies = [
 
 [project.optional-dependencies]
 postgres = ["psycopg[binary]>=3.2"]
+mysql = ["pymysql>=1.1"]
+all = ["psycopg[binary]>=3.2", "pymysql>=1.1"]
 dev = [
     # Testing
     "pytest",
@@ -28,11 +30,13 @@ dev = [
 
     # Drivers (typing + integration tests; users install via extras)
     "psycopg[binary]>=3.2",
+    "pymysql>=1.1",
 
     # Linting & formatting
     "ruff",
     "mypy",
     "types-pyyaml",
+    "types-pymysql",
     "bandit[toml]",
 
     # Pre-commit
