@@ -156,8 +156,8 @@ flow, including a rejected typo'd override.
 are opt-in extras:
 - SQLite — stdlib, no extra needed
 - PostgreSQL — `pip install 'reade[postgres]'` (psycopg 3)
-- MySQL — `pip install 'reade[mysql]'` (PyMySQL; connector lands later in
-  Phase 1)
+- MySQL — PyMySQL; the connector and its `reade[mysql]` extra land later
+  in Phase 1
 
 **Planned (not yet shipped):**
 - Trino (analytics engine connector)
