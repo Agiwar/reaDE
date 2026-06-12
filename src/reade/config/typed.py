@@ -4,6 +4,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
 
+from reade.config.env import merge_env_overrides
 from reade.config.factory import ConfigLoaderFactory
 from reade.core.enums.file_type import FileType
 from reade.core.errors.config import ConfigError
@@ -14,9 +15,12 @@ def load_config[ModelT: BaseModel](name: str | Path, *, model: type[ModelT]) -> 
 
     Composes the dict layer — loader selected by file suffix via
     ``ConfigLoaderFactory``, content parsed by ``ConfigLoader.load`` — with
-    pydantic validation on top. pydantic types stop at this boundary:
-    validation failures surface as ``ConfigError``, and the resulting
-    model's field values are passed on as plain parameters.
+    environment overrides and pydantic validation on top:
+    ``READE__``-prefixed environment variables override file values (see
+    ``merge_env_overrides``) before the result is validated. pydantic
+    types stop at this boundary: validation failures surface as
+    ``ConfigError``, and the resulting model's field values are passed on
+    as plain parameters.
 
     Args:
         name: Path to the configuration file.
@@ -50,6 +54,7 @@ def load_config[ModelT: BaseModel](name: str | Path, *, model: type[ModelT]) -> 
         ) from e
 
     data = ConfigLoaderFactory.get_loader(file_type).load(path)
+    data = merge_env_overrides(data)
     try:
         return model.model_validate(data)
     except ValidationError as e:
