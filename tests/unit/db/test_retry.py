@@ -90,6 +90,19 @@ class TestConnectWithRetry:
 
         assert sleeps == []
 
+    def test_backoff_caps_at_max_delay(self, sleeps: list[float]) -> None:
+        # Deploy-tunable attempt counts must not compound into unbounded
+        # sleeps: doubling stops at the 30s ceiling.
+        def always_failing() -> str:
+            raise FlakyError("down")
+
+        with pytest.raises(FlakyError):
+            connect_with_retry(
+                always_failing, attempts=4, backoff=20.0, retry_on=(FlakyError,)
+            )
+
+        assert sleeps == [20.0, 30.0, 30.0]
+
     def test_attempts_below_one_raise_value_error(self) -> None:
         with pytest.raises(ValueError, match="attempts"):
             connect_with_retry(

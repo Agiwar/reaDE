@@ -6,8 +6,9 @@ The typed layer is additive: it composes the frozen dict contract
 never escapes config/.
 """
 
-from inspect import signature
+from inspect import Parameter, signature
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, ValidationError
@@ -110,7 +111,7 @@ class TestLoadConfig:
         config = load_config(
             sqlite_yaml,
             model=SqliteConfig,
-            environ={"READE__DATABASE": "from-env.db"},
+            environ={"READE__SQLITE__DATABASE": "from-env.db"},
         )
 
         assert config.database == "from-env.db"
@@ -118,7 +119,7 @@ class TestLoadConfig:
     def test_default_environ_is_process_environment(
         self, sqlite_yaml: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("READE__DATABASE", "from-env.db")
+        monkeypatch.setenv("READE__SQLITE__DATABASE", "from-env.db")
 
         config = load_config(sqlite_yaml, model=SqliteConfig)
 
@@ -127,7 +128,7 @@ class TestLoadConfig:
     def test_empty_environ_disables_overrides(
         self, sqlite_yaml: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("READE__DATABASE", "ignored.db")
+        monkeypatch.setenv("READE__SQLITE__DATABASE", "ignored.db")
 
         config = load_config(sqlite_yaml, model=SqliteConfig, environ={})
 
@@ -150,7 +151,9 @@ class TestLoadConfig:
     ) -> None:
         with pytest.raises(ConfigError, match="databse"):
             load_config(
-                sqlite_yaml, model=SqliteConfig, environ={"READE__DATABSE": "oops"}
+                sqlite_yaml,
+                model=SqliteConfig,
+                environ={"READE__SQLITE__DATABSE": "oops"},
             )
 
 
@@ -307,15 +310,17 @@ class TestScopedModels:
                 environ={"READE__POSTGRES__HOSTT": "oops"},
             )
 
-    def test_scoped_models_coexist_in_one_environment(
+    def test_all_three_models_coexist_in_one_environment(
         self, postgres_yaml: Path, tmp_path: Path
     ) -> None:
-        # The collision the 1.1 review deferred to this sprint: one
-        # process, several models, each other's variables present.
+        # The collision the 1.1 review deferred to this sprint, closed
+        # by unified scoping at the 1.2 full-surface review: one
+        # process, three models, each other's variables present.
         environ = {
-            "READE__DATABASE": "stray-flat-var",
+            "READE__SQLITE__DATABASE": "sqlite-from-env.db",
             "READE__POSTGRES__HOST": "pg-from-env",
             "READE__MYSQL__HOST": "mysql-from-env",
+            "READE__DATABASE": "bare-var-no-namespace",
         }
         mysql_yaml = tmp_path / "mysql.yaml"
         mysql_yaml.write_text(
@@ -325,35 +330,35 @@ class TestScopedModels:
             'password: "from-file"\n',  # pragma: allowlist secret
             encoding="utf-8",
         )
+        sqlite_yaml = tmp_path / "db.yaml"
+        sqlite_yaml.write_text('database: "local.db"\n', encoding="utf-8")
 
+        sqlite_config = load_config(sqlite_yaml, model=SqliteConfig, environ=environ)
         postgres_config = load_config(
             postgres_yaml, model=PostgresConfig, environ=environ
         )
         mysql_config = load_config(mysql_yaml, model=MysqlConfig, environ=environ)
 
         # Each scoped model reads its own namespace and nothing else.
+        assert sqlite_config.database == "sqlite-from-env.db"
         assert postgres_config.host == "pg-from-env"
         assert postgres_config.database == "app"
         assert mysql_config.host == "mysql-from-env"
         assert mysql_config.database == "app"
 
-    def test_grandfathered_unscoped_model_fails_loudly_on_foreign_scope(
-        self, tmp_path: Path
-    ) -> None:
-        # The recorded cost of grandfathering the flat convention:
-        # SqliteConfig declares no prefix, so it still sees every
-        # READE__* variable — a scoped variable for another model fails
-        # it loudly (never silently) ...
+    def test_bare_and_foreign_variables_silently_ignored(self, tmp_path: Path) -> None:
+        # The unified-scoping trade-off, encoded: a bare READE__DATABASE
+        # (the pre-1.2 flat convention) and another model's scoped
+        # variable are both outside SqliteConfig's namespace — ignored,
+        # not rejected. That is what scoping means; the docs say so.
         sqlite_yaml = tmp_path / "db.yaml"
         sqlite_yaml.write_text('database: "local.db"\n', encoding="utf-8")
-        environ = {"READE__POSTGRES__HOST": "pg-from-env"}
+        environ = {
+            "READE__DATABASE": "flat-convention-remnant",
+            "READE__POSTGRES__HOST": "other-model",
+        }
 
-        with pytest.raises(ConfigError, match="postgres"):
-            load_config(sqlite_yaml, model=SqliteConfig, environ=environ)
-
-        # ... and the documented per-call mitigation (a filtered
-        # mapping) restores it.
-        config = load_config(sqlite_yaml, model=SqliteConfig, environ={})
+        config = load_config(sqlite_yaml, model=SqliteConfig, environ=environ)
 
         assert config.database == "local.db"
 
@@ -387,19 +392,77 @@ class TestScopedModels:
 
         assert config.port == 3307
 
+    def test_repr_and_str_never_leak_the_password(self, tmp_path: Path) -> None:
+        # A batch job logging its config object must not print the
+        # credential; model_dump() still includes it (required for the
+        # plain-parameter unpack).
+        for model in (PostgresConfig, MysqlConfig):
+            config = model(
+                host="h",
+                database="d",
+                user="u",
+                password="s3cret-value",  # pragma: allowlist secret
+            )
+
+            assert "s3cret-value" not in repr(config)
+            assert "s3cret-value" not in str(config)
+            dumped = config.model_dump()
+            # model_dump must keep it (plain-parameter unpack needs it).
+            assert dumped["password"] == "s3cret-value"  # noqa: S105  # pragma: allowlist secret
+
+    def test_env_prefix_declared_as_field_is_rejected(self, tmp_path: Path) -> None:
+        # A field-declared prefix is unreachable on the class, so scoping
+        # would silently fall back to unscoped — rejected loudly instead.
+        class FieldPrefix(BaseModel):
+            model_config = ConfigDict(extra="forbid")
+            env_prefix: str = "X"
+            database: str
+
+        file_path = tmp_path / "db.yaml"
+        file_path.write_text('database: "local.db"\n', encoding="utf-8")
+
+        with pytest.raises(ConfigError, match="ClassVar"):
+            load_config(file_path, model=FieldPrefix)
+
+    def test_env_prefix_must_be_a_non_empty_string(self, tmp_path: Path) -> None:
+        class EmptyPrefix(BaseModel):
+            model_config = ConfigDict(extra="forbid")
+            env_prefix: ClassVar[str] = ""
+            database: str
+
+        class WrongTypePrefix(BaseModel):
+            model_config = ConfigDict(extra="forbid")
+            env_prefix: ClassVar[int] = 5
+            database: str
+
+        file_path = tmp_path / "db.yaml"
+        file_path.write_text('database: "local.db"\n', encoding="utf-8")
+
+        for bad_model in (EmptyPrefix, WrongTypePrefix):
+            with pytest.raises(ConfigError, match="non-empty string"):
+                load_config(file_path, model=bad_model)
+
     def test_model_fields_mirror_connector_parameters(self) -> None:
         # D-record contract: flat model fields map one-to-one onto the
-        # consumer connector's constructor parameters.
+        # consumer connector's constructor parameters — names AND
+        # defaults, so neither can drift while the guard stays green.
         pairs = (
             (PostgresConfig, PostgresConnector),
             (MysqlConfig, MysqlConnector),
             (SqliteConfig, SqliteConnector),
         )
         for model, connector in pairs:
-            parameters = [
-                name
-                for name in signature(connector.__init__).parameters
+            parameters = {
+                name: parameter
+                for name, parameter in signature(connector.__init__).parameters.items()
                 if name != "self"
-            ]
+            }
 
             assert sorted(model.model_fields) == sorted(parameters)
+
+            for name, parameter in parameters.items():
+                field = model.model_fields[name]
+                if parameter.default is Parameter.empty:
+                    assert field.is_required(), name
+                else:
+                    assert field.default == parameter.default, name
