@@ -103,9 +103,36 @@ consumer benefit, and the tag keeps the phase installable via
 ### Phase 2 — sql + data_io → `v0.2.0`
 
 **Sprint 2.1 — sql**
-- Jinja2 template → SQL with parameter safety (no string-interpolation
-  injection paths)
-- Template discovery convention
+- Render contract: `render_template` is rebuilt around
+  `RenderedQuery(sql, params)` — values never appear in SQL text. A
+  `bind` filter registers each value in `params` and emits the dialect's
+  PEP 249 placeholder at render time (pyformat `%(name)s` for
+  PostgreSQL/MySQL, named `:name` for SQLite). No post-render placeholder
+  translation — naive `:name` rewriting breaks on PostgreSQL `::type`
+  casts.
+- Identifier safety: `ident` filter — allowlist
+  `^[A-Za-z_][A-Za-z0-9_]*$` (optional schema part) plus per-dialect
+  quoting (PostgreSQL/SQLite `"..."`, MySQL backticks). Dialect is the
+  existing `DbType` enum from `core.enums`; `sql` imports nothing from
+  `db`.
+- Jinja2 environment: `StrictUndefined`; templates load from the packaged
+  directory plus caller-configured directories, nothing else — this is
+  the discovery convention. Documented trust model: templates are code,
+  context is data.
+- `RenderedQuery` is a frozen stdlib dataclass (pydantic stays contained
+  to `config`).
+- Scope fence: executing bound params through the SDK is 2.2 scope — the
+  `execute` params seam is designed with `data_io`, its consumer. The one
+  shipped template consumer (validation's count rule) needs identifier
+  safety only. Also out: sandboxed/untrusted templates, dynamic ORDER BY
+  helpers, dialects beyond the MVP three.
+- Breaking change: `render_template`'s Phase-0 signature and return type
+  change — design-review note required in the PR.
+- DoD: 1.1 baseline (≥90% coverage gate on the module in CI, README
+  section, example) + injection tests: hostile value
+  `1; DROP TABLE fact_orders;--` appears only in `params`, never in SQL
+  text; hostile identifier raises; the README "unsanitized `{{ table }}`"
+  alpha caveat is removed by the PR that ships `ident`.
 
 **Sprint 2.2 — data_io**
 - Execute query / read / write; streaming vs. materialized results
