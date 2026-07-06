@@ -28,7 +28,9 @@ def connect_with_retry[T](
     permanent failures included — a bad password burns the configured
     attempts before surfacing. Classifying transient vs. permanent per
     driver is a taxonomy this helper does not attempt; bounded attempts
-    and the delay cap keep the worst case priced.
+    and the delay cap keep the worst case priced. Jitter is deliberately
+    absent: the golden path is a single batch job, not a fleet — herd
+    behavior is a pooling-era concern.
 
     Args:
         open_connection: Zero-argument callable that establishes and
