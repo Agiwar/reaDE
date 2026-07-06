@@ -92,7 +92,11 @@ usable release — this closes the "everything 30%, nothing shippable" risk.
   Trino is optional and may be deferred to Phase 4)
 - DoD: same as 1.1 + integration tests against dockerized PostgreSQL and MySQL
 
-**Gate → tag `v0.1.0`, publish to TestPyPI first, then PyPI.**
+**Gate → tag `v0.1.0`.** TestPyPI/PyPI publish deferred by amendment to
+Phase 4: publishing pre-freeze burns immutable version numbers for no
+consumer benefit, and the tag keeps the phase installable via
+`git+https://…@v0.1.0`. First publish is `v1.0.0rc1`. Accepted risk: the
+`reade` name on PyPI stays unclaimed until then.
 
 ---
 
