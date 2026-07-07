@@ -89,7 +89,10 @@ def render_template(
         dialect: Database dialect to render placeholders for.
         context: Template variables.
         search_paths: Additional template directories, searched after
-            the packaged directory.
+            the packaged directory. Every entry must be an existing
+            directory — a missing path is treated as a caller bug, not
+            an optional overlay; callers with genuinely optional
+            directories filter them first (``if path.is_dir()``).
 
     Returns:
         The rendered statement and its bound parameters.
@@ -101,15 +104,12 @@ def render_template(
             ``bind`` is misused (collection value, invalid key, or a
             placeholder missing from the rendered text); if ``ident``
             rejects an identifier (non-string, or any dot-separated part
-            failing the allowlist); or if a parameterized pyformat
+            failing the allowlist); if a parameterized pyformat
             statement contains a stray ``%`` that must be written
-            ``%%``.
+            ``%%``; or if a ``search_paths`` entry is not an existing
+            directory.
     """
-    resolved = (
-        tuple(str(Path(path).resolve()) for path in search_paths)
-        if search_paths
-        else ()
-    )
+    resolved = _resolved_search_paths(search_paths)
     env = _build_environment(resolved)
     filename = f"{template_name}.sql.j2"
     try:
@@ -134,6 +134,34 @@ def render_template(
     _check_placeholders(sql, state)
     _check_percent_literals(sql, state)
     return RenderedQuery(sql=sql, params=dict(state.params))
+
+
+def _resolved_search_paths(
+    search_paths: Sequence[str | Path] | None,
+) -> tuple[str, ...]:
+    """Resolve and validate caller template directories.
+
+    Validation runs per render, not in the cached environment builder: a
+    directory created after a failing call starts working, and one
+    deleted after a succeeding call starts failing. A missing entry
+    fails loud, consistent with the module's other guards — it is a bug
+    (typo, wrong working directory) far more often than an intentional
+    overlay.
+
+    Raises:
+        SqlError: If an entry does not exist or is not a directory.
+    """
+    if not search_paths:
+        return ()
+    resolved = []
+    for entry in search_paths:
+        path = Path(entry).resolve()
+        if not path.is_dir():
+            raise SqlError(
+                f"search_paths entry {str(entry)!r} is not an existing directory"
+            )
+        resolved.append(str(path))
+    return tuple(resolved)
 
 
 def _check_placeholders(sql: str, state: _RenderState) -> None:

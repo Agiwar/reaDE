@@ -47,14 +47,29 @@ class TestDiscoveryConvention:
         with pytest.raises(SqlError, match=r"probe\.sql\.j2"):
             render_template("probe", DbType.SQLITE, search_paths=[tmp_path])
 
-    def test_nonexistent_search_dir_is_tolerated(self, tmp_path: Path) -> None:
+    def test_nonexistent_search_dir_raises(self, tmp_path: Path) -> None:
         missing = tmp_path / "does_not_exist"
 
-        rendered = render_template(
-            "row_count", DbType.SQLITE, {"table": "events"}, search_paths=[missing]
-        )
+        with pytest.raises(SqlError, match="does_not_exist"):
+            render_template(
+                "row_count",
+                DbType.SQLITE,
+                {"table": "events"},
+                search_paths=[missing],
+            )
 
-        assert 'FROM "events"' in rendered.sql
+    def test_file_as_search_dir_raises(self, tmp_path: Path) -> None:
+        not_a_dir = tmp_path / "somefile.txt"
+        not_a_dir.write_text("x", encoding="utf-8")
+
+        with pytest.raises(SqlError, match="not an existing directory"):
+            render_template("row_count", DbType.SQLITE, search_paths=[not_a_dir])
+
+    def test_absolute_template_name_cannot_escape_the_roots(
+        self, tmp_path: Path
+    ) -> None:
+        with pytest.raises(SqlError, match="not found"):
+            render_template("/etc/passwd", DbType.SQLITE, search_paths=[tmp_path])
 
     def test_environment_is_cached_per_search_path_tuple(self, tmp_path: Path) -> None:
         first = _build_environment((str(tmp_path),))
