@@ -1,0 +1,5 @@
+SELECT event_name, COUNT(*) AS event_count
+FROM {{ table | ident }}
+WHERE created_at >= {{ since | bind("since") }}
+GROUP BY event_name
+ORDER BY event_count DESC
