@@ -67,7 +67,9 @@ def render_template(
 
     Looks up ``<template_name>.sql.j2`` in the packaged templates and, if
     given, in ``search_paths`` — packaged names always win, so a caller
-    directory cannot shadow a packaged template. Values passed through
+    directory cannot shadow a packaged template. Those two locations are
+    the entire discovery surface: lookup is by bare name with the fixed
+    ``.sql.j2`` extension, and nothing else is consulted. Values passed through
     the template's ``bind`` filter never appear in the SQL text: each
     lands in ``RenderedQuery.params`` and the dialect's PEP 249
     placeholder — pyformat ``%(key)s`` for PostgreSQL/MySQL, named
