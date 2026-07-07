@@ -12,7 +12,7 @@
 |---|---|---|
 | **Design loop** | Once, at the start (Phase 0) | Purpose & scope → API contract → architecture spike → design review |
 | **Sprint loop** | Every sprint | Implement → test → code review → optimize |
-| **Release loop** | End of every phase | Docs → version bump → tag → publish → collect feedback |
+| **Release loop** | End of every phase | Docs → version bump → tag → collect feedback; publishing starts at Phase 4 (Phase 1 gate amendment) |
 
 Rule: a sprint is **done** only when its definition of done (DoD) passes.
 A phase is **done** only when its release tag exists.
@@ -92,7 +92,7 @@ usable release — this closes the "everything 30%, nothing shippable" risk.
   Trino is optional and may be deferred to Phase 4)
 - DoD: same as 1.1 + integration tests against dockerized PostgreSQL and MySQL
 
-**Gate → tag `v0.1.0`.** TestPyPI/PyPI publish deferred by amendment to
+**Gate → tag `v0.1.0` (cut at PR #21, 2026-07-06).** TestPyPI/PyPI publish deferred by amendment to
 Phase 4: publishing pre-freeze burns immutable version numbers for no
 consumer benefit, and the tag keeps the phase installable via
 `git+https://…@v0.1.0`. First publish is `v1.0.0rc1`. Accepted risk: the
@@ -131,11 +131,17 @@ consumer benefit, and the tag keeps the phase installable via
 - DoD: 1.1 baseline (≥90% coverage gate on the module in CI, README
   section, example) + injection tests: hostile value
   `1; DROP TABLE fact_orders;--` appears only in `params`, never in SQL
-  text; hostile identifier raises; the README "unsanitized `{{ table }}`"
-  alpha caveat is removed by the PR that ships `ident`.
+  text; hostile identifiers `fact_orders; DROP TABLE fact_orders` and
+  `fact_orders"--` raise; the README "unsanitized `{{ table }}`" alpha
+  caveat is removed by the PR that ships `ident` (the general pre-alpha
+  and not-yet-published notes stay until their own milestones).
 
 **Sprint 2.2 — data_io**
 - Execute query / read / write; streaming vs. materialized results
+- Breaking change (pre-registered at the 2.1 spec): `execute()` on
+  `ConnectionInterface`/`ConnectionBase` gains a `params` argument so
+  `RenderedQuery` executes through the SDK — post-Phase-0 contract
+  change; design-review note due in the implementing PR
 - Consistent error mapping into `core.errors`
 - CSV reader (relocated from config — CSV is data, not config; see PR #7's
   design notes)
