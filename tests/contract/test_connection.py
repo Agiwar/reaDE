@@ -7,9 +7,10 @@ connection is a no-op.
 
 import pytest
 
+from reade.core.enums import DbType
 from reade.core.errors import NotConnectedError
 from reade.core.interfaces import ConnectionInterface
-from reade.db import SqliteConnector
+from reade.db import MysqlConnector, PostgresConnector, SqliteConnector
 
 # Static conformance proof: mypy verifies on this assignment that the
 # implementation satisfies the protocol.
@@ -72,3 +73,8 @@ class TestConnectionContract:
 
         with pytest.raises(NotConnectedError):
             _ = connector.connection
+
+    def test_every_connector_declares_its_db_type(self) -> None:
+        connectors = (SqliteConnector, PostgresConnector, MysqlConnector)
+
+        assert {connector.db_type for connector in connectors} == set(DbType)

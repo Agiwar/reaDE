@@ -1,9 +1,10 @@
 """SQLite database connector."""
 
 import sqlite3
-from typing import Any
+from typing import Any, ClassVar
 
 from reade.core.base.connector import ConnectionBase
+from reade.core.enums.db_type import DbType
 from reade.core.errors.db import DbError
 
 
@@ -25,6 +26,8 @@ class SqliteConnector(ConnectionBase[sqlite3.Connection]):
         ...     connector.ping()
         True
     """
+
+    db_type: ClassVar[DbType] = DbType.SQLITE
 
     def __init__(self, database: str) -> None:
         """Initialize the connector.

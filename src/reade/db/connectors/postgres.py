@@ -1,8 +1,9 @@
 """PostgreSQL database connector."""
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from reade.core.base.connector import ConnectionBase
+from reade.core.enums.db_type import DbType
 from reade.core.errors.db import DbError
 from reade.db._retry import connect_with_retry
 
@@ -37,6 +38,8 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         ...     connector.ping()
         True
     """
+
+    db_type: ClassVar[DbType] = DbType.POSTGRESQL
 
     def __init__(
         self,
