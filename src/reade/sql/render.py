@@ -77,7 +77,10 @@ def render_template(
 
     Trust model: templates are code, context is data. Render only
     templates from directories you control; pass untrusted values
-    through ``bind``.
+    through ``bind`` and untrusted identifiers through ``ident``.
+    ``ident`` accepts only conservative names — spaces, quotes, and
+    non-ASCII characters are legal SQL identifiers but are rejected by
+    design; the allowlist is the security posture.
 
     Args:
         template_name: Bare template name (e.g., ``"row_count"``).
@@ -94,9 +97,11 @@ def render_template(
             render, or references a variable not supplied in ``context``
             (the original Jinja2 exception is attached as the cause); if
             ``bind`` is misused (collection value, invalid key, or a
-            placeholder missing from the rendered text); or if a
-            parameterized pyformat statement contains a stray ``%`` that
-            must be written ``%%``.
+            placeholder missing from the rendered text); if ``ident``
+            rejects an identifier (non-string, or any dot-separated part
+            failing the allowlist); or if a parameterized pyformat
+            statement contains a stray ``%`` that must be written
+            ``%%``.
     """
     resolved = (
         tuple(str(Path(path).resolve()) for path in search_paths)
