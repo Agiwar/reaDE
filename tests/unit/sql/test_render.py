@@ -24,14 +24,23 @@ class TestRenderTemplate:
 
         assert isinstance(rendered, RenderedQuery)
         assert "SELECT COUNT(*) AS row_count" in rendered.sql
-        assert "FROM events" in rendered.sql
+        assert 'FROM "events"' in rendered.sql
         assert rendered.params == {}
 
-    @pytest.mark.parametrize("dialect", list(DbType))
-    def test_row_count_renders_for_every_dialect(self, dialect: DbType) -> None:
+    @pytest.mark.parametrize(
+        ("dialect", "expected_from"),
+        [
+            (DbType.SQLITE, 'FROM "events"'),
+            (DbType.MYSQL, "FROM `events`"),
+            (DbType.POSTGRESQL, 'FROM "events"'),
+        ],
+    )
+    def test_row_count_quotes_the_table_for_every_dialect(
+        self, dialect: DbType, expected_from: str
+    ) -> None:
         rendered = render_template("row_count", dialect, {"table": "events"})
 
-        assert "FROM events" in rendered.sql
+        assert expected_from in rendered.sql
         assert rendered.params == {}
 
     def test_unknown_template_raises_sql_error(self) -> None:

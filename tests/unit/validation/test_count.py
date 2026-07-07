@@ -4,7 +4,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from reade.core.errors import DbError
+from reade.core.errors import DbError, SqlError
 from reade.data_io import execute_query
 from reade.db import SqliteConnector
 from reade.validation import RowCountRule
@@ -42,3 +42,11 @@ class TestRowCountRule:
     ) -> None:
         with pytest.raises(DbError):
             RowCountRule(table="missing_table").evaluate(connector)
+
+    def test_hostile_table_name_raises_sql_error(
+        self, connector: SqliteConnector
+    ) -> None:
+        rule = RowCountRule(table="events; DROP TABLE events")
+
+        with pytest.raises(SqlError):
+            rule.evaluate(connector)

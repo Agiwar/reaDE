@@ -20,7 +20,12 @@ from jinja2 import (
 from reade.core.enums.db_type import DbType
 from reade.core.errors.sql import SqlError
 from reade.sql._dialect import _DIALECTS
-from reade.sql._filters import _ACTIVE_STATE, _RenderState, bind_filter
+from reade.sql._filters import (
+    _ACTIVE_STATE,
+    _RenderState,
+    bind_filter,
+    ident_filter,
+)
 from reade.sql.models import RenderedQuery
 
 _PYFORMAT_TOKEN = re.compile(r"%\([A-Za-z_][A-Za-z0-9_]*\)s|%%|%")
@@ -46,6 +51,7 @@ def _build_environment(search_paths: tuple[str, ...]) -> Environment:
         undefined=StrictUndefined,
     )
     env.filters["bind"] = bind_filter
+    env.filters["ident"] = ident_filter
     return env
 
 
