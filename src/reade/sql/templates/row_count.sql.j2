@@ -1,2 +1,2 @@
 SELECT COUNT(*) AS row_count
-FROM {{ table }}
+FROM {{ table | ident }}

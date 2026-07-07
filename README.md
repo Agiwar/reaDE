@@ -84,10 +84,6 @@ from reade.validation import RowCountRule
 from reade.dq import VolumeDimension
 ```
 
-> **Alpha caveat:** SQL templating interpolates identifiers (e.g.
-> `{{ table }}`) without sanitization — parameter safety is Phase 2
-> scope. Do not render templates with untrusted input.
-
 ### Module Status
 
 | Module | Status | Notes |

@@ -14,9 +14,26 @@ _KEY_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _COLLECTION_TYPES = (list, tuple, set, frozenset, dict)
 
 
+_MAX_IDENT_PARTS = 2
+
+
 def _same_value(existing: object, value: object) -> bool:
     """Equality that never crosses types (1, 1.0, and True stay distinct)."""
     return type(existing) is type(value) and bool(existing == value)
+
+
+def _reject_undefined(value: object) -> None:
+    """Raise Jinja's canonical UndefinedError for an undefined value.
+
+    StrictUndefined only raises when the undefined is operated on;
+    merely passing through a filter is not an operation, so the filters
+    trigger the failure themselves before an undefined can become a
+    bound parameter or an identifier.
+    """
+    if isinstance(value, Undefined):
+        # Private but stable Jinja API: raising UndefinedError directly
+        # (the public alternative) loses the variable name in the message.
+        value._fail_with_undefined_error()
 
 
 class _RenderState:
@@ -94,8 +111,7 @@ def bind_filter(value: Any, name: str | None = None) -> str:
             binding is dialect-specific and not supported), or the key
             fails the ``[A-Za-z_][A-Za-z0-9_]*`` allowlist.
     """
-    if isinstance(value, Undefined):
-        value._fail_with_undefined_error()
+    _reject_undefined(value)
     if isinstance(value, _COLLECTION_TYPES):
         raise SqlError(
             f"bind does not support collection values, got "
@@ -112,3 +128,42 @@ def bind_filter(value: Any, name: str | None = None) -> str:
             )
         key = state.register_named(name, value)
     return state.dialect.placeholder(key)
+
+
+def ident_filter(value: Any) -> str:
+    """Validate an identifier against the allowlist and quote it.
+
+    Registered on the rendering environment as ``ident``. Identifiers
+    cannot be driver-bound the way values can, so safety is an
+    allowlist: each dot-separated part must match
+    ``[A-Za-z_][A-Za-z0-9_]*``, with at most one schema qualifier
+    (``schema.table``). Parts are then wrapped in the dialect's
+    identifier quote — the allowlist excludes quote characters entirely,
+    so there is no escaping to get wrong.
+
+    Quoted identifiers are case-exact: on PostgreSQL pass names in
+    stored case (lowercase unless created quoted).
+
+    Args:
+        value: The identifier, optionally schema-qualified.
+
+    Returns:
+        The quoted identifier text.
+
+    Raises:
+        SqlError: If the value is not a string, any part fails the
+            allowlist, or more than one qualifier is present.
+    """
+    _reject_undefined(value)
+    if not isinstance(value, str):
+        raise SqlError(f"Identifier must be a string, got {type(value).__name__}")
+    parts = value.split(".")
+    if len(parts) > _MAX_IDENT_PARTS or not all(
+        _KEY_PATTERN.fullmatch(part) for part in parts
+    ):
+        raise SqlError(
+            f"Identifier {value!r} is not allowed: identifiers must match "
+            "[A-Za-z_][A-Za-z0-9_]* with at most one schema qualifier"
+        )
+    quote = _ACTIVE_STATE.get().dialect.quote_char
+    return ".".join(f"{quote}{part}{quote}" for part in parts)
