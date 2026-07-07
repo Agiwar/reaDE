@@ -43,10 +43,12 @@ def main() -> None:
             "INSERT INTO events (name) VALUES ('signup'), ('login'), ('logout')",
         )
 
-        # sql: render a packaged Jinja2 template into a SQL string.
-        sql = render_template("row_count", table="events")
-        rows = execute_query(connector, sql)
-        print(f"[sql]        rendered: {sql.strip()}")
+        # sql: render a packaged Jinja2 template into a SQL statement plus
+        # its bound parameters (empty here — row_count binds no values;
+        # executing params through the SDK arrives with the 2.2 seam).
+        rendered = render_template("row_count", connector.db_type, {"table": "events"})
+        rows = execute_query(connector, rendered.sql)
+        print(f"[sql]        rendered: {rendered.sql.strip()}")
         print(f"[data_io]    result rows: {rows}")
 
         # validation: one rule — row count against a threshold.

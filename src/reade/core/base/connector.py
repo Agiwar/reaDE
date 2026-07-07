@@ -2,8 +2,9 @@
 
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Any, Self
+from typing import Any, ClassVar, Self
 
+from reade.core.enums.db_type import DbType
 from reade.core.errors.db import NotConnectedError
 
 
@@ -14,10 +15,20 @@ class ConnectionBase[T](ABC):
     underlying driver connection. Satisfies the ``ConnectionInterface``
     protocol.
 
+    Attributes:
+        db_type: The database dialect the connector speaks. Each
+            concrete connector declares its ``DbType`` member; consumers
+            key dialect-specific behavior off it — e.g. SQL rendering
+            via ``render_template(name, connector.db_type, context)`` —
+            so the dialect can never disagree with the connection it
+            describes.
+
     Type Parameters:
         T: The underlying driver connection type
             (e.g., ``sqlite3.Connection``).
     """
+
+    db_type: ClassVar[DbType]
 
     def __init__(self) -> None:
         """Initialize an unconnected connector."""

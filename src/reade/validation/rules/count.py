@@ -43,8 +43,10 @@ class RowCountRule:
                 this layer (``DbError``, ``NotConnectedError``).
             RuleError: If the query result has no usable count value.
         """
-        sql = render_template("row_count", table=self._table)
-        rows = execute_query(connector, sql)
+        rendered = render_template(
+            "row_count", connector.db_type, {"table": self._table}
+        )
+        rows = execute_query(connector, rendered.sql)
         try:
             observed = int(rows[0][0])
         except ReadeError:

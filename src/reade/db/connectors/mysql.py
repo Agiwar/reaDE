@@ -1,8 +1,9 @@
 """MySQL database connector."""
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from reade.core.base.connector import ConnectionBase
+from reade.core.enums.db_type import DbType
 from reade.core.errors.db import DbError
 from reade.db._retry import connect_with_retry
 
@@ -37,6 +38,8 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
         ...     connector.ping()
         True
     """
+
+    db_type: ClassVar[DbType] = DbType.MYSQL
 
     def __init__(
         self,

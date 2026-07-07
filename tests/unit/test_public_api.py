@@ -14,6 +14,7 @@ from reade.core.errors import (
 )
 from reade.core.interfaces import ConfigLoader, ConnectionInterface
 from reade.core.models import DB_METADATA_REGISTRY, DbMetadata
+from reade.sql import RenderedQuery, render_template
 
 
 def test_package_is_importable() -> None:
@@ -47,6 +48,11 @@ def test_db_types_cover_exactly_the_mvp_databases() -> None:
 
 def test_file_type_values_are_dotted_extensions() -> None:
     assert all(file_type.value.startswith(".") for file_type in FileType)
+
+
+def test_sql_render_surface_is_importable() -> None:
+    assert RenderedQuery is not None
+    assert callable(render_template)
 
 
 def test_metadata_registry_covers_every_db_type() -> None:
