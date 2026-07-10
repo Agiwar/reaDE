@@ -91,7 +91,7 @@ from reade.dq import VolumeDimension
 | `core/` | ✅ API surface | Protocols, enums, errors, models, base ABCs |
 | `config/` | ✅ Hardened (1.1) | YAML / JSON → typed objects; search paths; env overrides |
 | `db/` | ✅ Hardened (1.2) | SQLite / PostgreSQL / MySQL; lifecycle, health check, connect retry; dockerized integration tests |
-| `sql/` | ✅ Thin slice | One Jinja2 template (`row_count`); discovery convention in Phase 2 |
+| `sql/` | ✅ Hardened (2.1) | `RenderedQuery` render contract; `bind`/`ident` filters; discovery convention; injection tests |
 | `data_io/` | ✅ Thin slice | Execute query → rows; readers/writers (incl. CSV) in Phase 2 |
 | `validation/` | ✅ Thin slice | Row-count rule; more rules in Phase 3 |
 | `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
@@ -198,6 +198,56 @@ scoped config, override namespacing, and the connector lifecycle against
 a real server (CI runs it against a dockerized PostgreSQL; locally, start
 `tests/integration/compose.yaml`).
 
+## SQL Templating
+
+Templates render into a `RenderedQuery(sql, params)` — values passed
+through the `bind` filter never appear in the SQL text, and identifiers
+pass the `ident` allowlist before per-dialect quoting. One template
+serves every backend: the dialect decides placeholder style and quote
+character at render time.
+
+```python
+from pathlib import Path
+
+from reade.core.enums import DbType
+from reade.sql import render_template
+
+rendered = render_template(
+    "daily_events",                     # <name>.sql.j2, looked up by name
+    DbType.POSTGRESQL,                  # or connector.db_type
+    {"table": "events", "since": "2026-01-01"},
+    search_paths=[Path("my/templates")],
+)
+rendered.sql     # ... FROM "events" WHERE created_at >= %(since)s ...
+rendered.params  # {"since": "2026-01-01"}
+```
+
+- **Trust model: templates are code, context is data.** Render only
+  templates from directories you control; pass untrusted values through
+  `bind` and untrusted identifiers through `ident`. There is no API to
+  render ad-hoc template strings.
+- **`bind`** registers a value in `params` and emits the dialect's
+  PEP 249 placeholder — pyformat `%(key)s` for PostgreSQL/MySQL, named
+  `:key` for SQLite. Keys are deterministic (`p0, p1, …`, or an explicit
+  `bind("since")` for readable params). In pyformat dialects, write a
+  literal `%` as `%%` whenever the statement binds parameters.
+- **`ident`** allows `[A-Za-z_][A-Za-z0-9_]*` per dot-part (at most one
+  schema qualifier) and quotes per dialect (`"events"`, `` `events` ``).
+  Quoted identifiers are case-exact — on PostgreSQL pass names in stored
+  case. Exotic-but-legal names (spaces, quotes, non-ASCII) are rejected
+  by design.
+- **Discovery:** the packaged templates plus your `search_paths`,
+  nothing else. Packaged names always win; a missing `search_paths`
+  directory fails loud; lookup uses the fixed `<name>.sql.j2` form.
+- **Executing bound params through the SDK arrives with the 2.2
+  `data_io` seam.** Until then, hand `rendered.sql` / `rendered.params`
+  to your driver via the connector's `connection` escape hatch — and
+  pass `None`, not `{}`, when `params` is empty.
+
+See [`examples/sql_render.py`](examples/sql_render.py) — one template
+rendered for all three dialects, then executed with bound parameters on
+SQLite.
+
 ## MVP Scope
 
 **Core database support** — the base install stays light; server drivers
@@ -227,7 +277,7 @@ are opt-in extras:
 |--------|---------------|
 | `config/` | Parse YAML / JSON → typed objects |
 | `db/` | Connection lifecycle, health check |
-| `sql/` | Render Jinja2 templates → SQL strings |
+| `sql/` | Render Jinja2 templates → `RenderedQuery` (SQL + bound params) |
 | `data_io/` | Execute SQL, external I/O (incl. CSV readers) |
 | `validation/` | Schema, type, and rule validation |
 | `dq/` | Data quality dimension aggregation |
