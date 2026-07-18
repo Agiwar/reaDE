@@ -179,7 +179,7 @@ Adds no v0.2.0 feature scope.
 - Execute query / read / write; streaming vs. materialized results
 - Breaking changes (pre-registered at the 2.1 spec and its kickoff
   consults; post-Phase-0 contract changes — one design-review note
-  covers the bundle, due in the implementing PR):
+  covers the bundle, itemizing each break, due in the implementing PR):
   - `execute()` on `ConnectionInterface`/`ConnectionBase` gains a
     `params` argument so `RenderedQuery` executes through the SDK
   - `db_type` joins `ConnectionInterface`, riding the same break — the
