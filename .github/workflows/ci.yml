@@ -61,11 +61,17 @@ jobs:
       - name: Type check (mypy strict)
         run: make type-check
 
+      - name: Security scan (bandit)
+        run: make security
+
+      - name: Import contracts (import-linter)
+        run: make imports
+
       - name: Tests (pytest)
         run: make test
 
       - name: Integration tests ran (not skipped)
-        run: uv run pytest -m integration -rs | grep -E "[1-9][0-9]* passed"
+        run: set -o pipefail && uv run pytest -m integration -rs | grep -E "[1-9][0-9]* passed"
 
       - name: End-to-end example
         run: uv run python examples/end_to_end.py
@@ -87,3 +93,6 @@ jobs:
 
       - name: Sql module coverage gate (>=90%)
         run: uv run pytest --cov=reade.sql --cov-fail-under=90 -q
+
+      - name: Global coverage gate (>=90%)
+        run: uv run pytest --cov=src --cov-fail-under=90 -q

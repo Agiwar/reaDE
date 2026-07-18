@@ -28,20 +28,18 @@ dev = [
     # Testing
     "pytest",
     "pytest-cov",
-
     # Drivers (typing + integration tests; users install via extras)
     "psycopg[binary]>=3.2",
     "pymysql>=1.1",
-
     # Linting & formatting
     "ruff",
     "mypy",
     "types-pyyaml",
     "types-pymysql",
     "bandit[toml]",
-
     # Pre-commit
     "pre-commit",
+    "import-linter>=2.13",
 ]
 
 [project.urls]
@@ -126,3 +124,21 @@ markers = [
 [tool.bandit]
 exclude_dirs = ["tests", "build", "dist", ".venv", ".pyvenv*"]
 skips = ["B101"]
+
+
+# ==================== IMPORT-LINTER ====================
+[tool.importlinter]
+root_package = "reade"
+
+[[tool.importlinter.contracts]]
+name = "Layered dependency chain"
+type = "layers"
+layers = [
+    "reade.dq",
+    "reade.validation",
+    "reade.data_io",
+    "reade.sql",
+    "reade.db",
+    "reade.config",
+    "reade.core",
+]

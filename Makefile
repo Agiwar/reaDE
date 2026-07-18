@@ -1,4 +1,4 @@
-.PHONY: help h install dev-install lint lint-fix format type-check security test test-cov check-all pre-commit build publish-test publish clean tree
+.PHONY: help h install dev-install lint lint-fix format type-check security imports test test-cov check-all pre-commit build publish-test publish clean tree
 
 # Colors for terminal output
 BLUE := \033[0;34m
@@ -48,15 +48,19 @@ security: ## Run bandit security scan
 	@echo "$(BLUE)Running security checks...$(NC)"
 	uv run bandit -r src -c pyproject.toml
 
+imports: ## Check the layered dependency contract
+	@echo "$(BLUE)Checking import contracts...$(NC)"
+	uv run lint-imports
+
 test: ## Run tests
 	@echo "$(BLUE)Running tests...$(NC)"
 	uv run pytest
 
-test-cov: ## Run tests with coverage report
+test-cov: ## Run tests with coverage report (gated at 90%)
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
-	uv run pytest --cov=src --cov-report=html --cov-report=term-missing
+	uv run pytest --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=90
 
-check-all: lint type-check security test ## Run all checks (lint, type, security, test)
+check-all: lint type-check security imports test-cov ## Run all checks (lint, type, security, imports, gated coverage)
 	@echo "$(GREEN)All checks passed!$(NC)"
 
 pre-commit: ## Run pre-commit hooks on all files

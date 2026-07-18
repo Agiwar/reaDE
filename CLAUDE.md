@@ -16,8 +16,22 @@ scope only if the current sprint's DoD covers it.
 - Install: `uv sync` (with dev tools: `uv sync --extra dev`)
 - Test: `uv run pytest`
 - Lint + types: `uv run ruff check src tests && uv run mypy src tests`
-- All gates: `make check-all` (lint, type-check, bandit, tests)
+- All gates: `make check-all` (lint, type-check, bandit, import contracts,
+  tests with the coverage gate)
 - Hooks: `uv run pre-commit install`
+
+## Working loop
+
+- Completion contract: before declaring any task done, run `make check-all`
+  yourself and include an output summary in your report. Any red gate means
+  the task is not done — keep fixing. Never claim completion without a
+  green run in this session.
+- Default workflow per task is TDD: write the failing test first, show it
+  red, then implement to green. Do not modify tests during implementation;
+  if a test itself must change, say so explicitly and why.
+- Hooks in `.claude/settings.json` contain read-only verification commands
+  only. Destructive or repo-admin actions keep per-action confirmation and
+  execution reports (existing rule).
 
 ## Architecture rules
 
