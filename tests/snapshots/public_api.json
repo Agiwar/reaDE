@@ -1,0 +1,329 @@
+{
+  "reade.config.ConfigLoaderFactory": {
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "get_loader": "(cls, file_type: reade.core.enums.file_type.FileType) -> reade.core.interfaces.config_loader.ConfigLoader"
+    }
+  },
+  "reade.config.JsonLoader": {
+    "annotations": {
+      "file_types": "typing.ClassVar[frozenset[reade.core.enums.file_type.FileType]]"
+    },
+    "bases": [
+      "reade.core.base.file_loader.FileLoaderBase"
+    ],
+    "members": {
+      "file_types": "{<FileType.JSON: '.json'>}"
+    }
+  },
+  "reade.config.MysqlConfig": {
+    "bases": [
+      "pydantic.main.BaseModel"
+    ],
+    "class_vars": {
+      "env_prefix": "'MYSQL'"
+    },
+    "model_config": "{'extra': 'forbid'}",
+    "signature": "(*, host: str, database: str, user: str, password: str, port: int = 3306, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None"
+  },
+  "reade.config.PostgresConfig": {
+    "bases": [
+      "pydantic.main.BaseModel"
+    ],
+    "class_vars": {
+      "env_prefix": "'POSTGRES'"
+    },
+    "model_config": "{'extra': 'forbid'}",
+    "signature": "(*, host: str, database: str, user: str, password: str, port: int = 5432, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None"
+  },
+  "reade.config.SqliteConfig": {
+    "bases": [
+      "pydantic.main.BaseModel"
+    ],
+    "class_vars": {
+      "env_prefix": "'SQLITE'"
+    },
+    "model_config": "{'extra': 'forbid'}",
+    "signature": "(*, database: str) -> None"
+  },
+  "reade.config.YamlLoader": {
+    "annotations": {
+      "file_types": "typing.ClassVar[frozenset[reade.core.enums.file_type.FileType]]"
+    },
+    "bases": [
+      "reade.core.base.file_loader.FileLoaderBase"
+    ],
+    "members": {
+      "file_types": "{<FileType.YAML: '.yaml'>, <FileType.YML: '.yml'>}"
+    }
+  },
+  "reade.config.load_config": "(name: str | pathlib.Path, *, model: type[ModelT], search_paths: collections.abc.Sequence[str | pathlib.Path] | None = None, environ: collections.abc.Mapping[str, str] | None = None) -> ModelT",
+  "reade.config.merge_env_overrides": "(data: dict[str, typing.Any], environ: collections.abc.Mapping[str, str] = <_Environ>, *, scope: str | None = None) -> dict[str, typing.Any]",
+  "reade.core.base.ConnectionBase": {
+    "annotations": {
+      "db_type": "typing.ClassVar[reade.core.enums.db_type.DbType]"
+    },
+    "bases": [
+      "abc.ABC",
+      "typing.Generic"
+    ],
+    "members": {
+      "__enter__": "(self) -> Self",
+      "__exit__": "(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: traceback | None) -> None",
+      "__init__": "(self) -> None",
+      "close": "(self) -> None",
+      "connect": "(self) -> None",
+      "connection": "property(self) -> T",
+      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "is_connected": "(self) -> bool",
+      "ping": "(self) -> bool"
+    }
+  },
+  "reade.core.base.FileLoaderBase": {
+    "annotations": {
+      "file_types": "typing.ClassVar[frozenset[reade.core.enums.file_type.FileType]]"
+    },
+    "bases": [
+      "abc.ABC"
+    ],
+    "members": {
+      "load": "(self, path: pathlib.Path) -> dict[str, typing.Any]"
+    }
+  },
+  "reade.core.enums.DbType": {
+    "bases": [
+      "enum.StrEnum"
+    ],
+    "members": {
+      "MYSQL": "mysql",
+      "POSTGRESQL": "postgresql",
+      "SQLITE": "sqlite"
+    }
+  },
+  "reade.core.enums.FileType": {
+    "bases": [
+      "enum.StrEnum"
+    ],
+    "members": {
+      "CSV": ".csv",
+      "JSON": ".json",
+      "YAML": ".yaml",
+      "YML": ".yml"
+    }
+  },
+  "reade.core.errors.ConfigError": {
+    "bases": [
+      "reade.core.errors.base.ReadeError"
+    ]
+  },
+  "reade.core.errors.DataIoError": {
+    "bases": [
+      "reade.core.errors.base.ReadeError"
+    ]
+  },
+  "reade.core.errors.DbError": {
+    "bases": [
+      "reade.core.errors.base.ReadeError"
+    ]
+  },
+  "reade.core.errors.DqError": {
+    "bases": [
+      "reade.core.errors.base.ReadeError"
+    ]
+  },
+  "reade.core.errors.NotConnectedError": {
+    "bases": [
+      "reade.core.errors.db.DbError"
+    ]
+  },
+  "reade.core.errors.ReadeError": {
+    "bases": [
+      "builtins.Exception"
+    ]
+  },
+  "reade.core.errors.RuleError": {
+    "bases": [
+      "reade.core.errors.base.ReadeError"
+    ]
+  },
+  "reade.core.errors.SqlError": {
+    "bases": [
+      "reade.core.errors.base.ReadeError"
+    ]
+  },
+  "reade.core.interfaces.ConfigLoader": {
+    "bases": [
+      "typing.Protocol"
+    ],
+    "members": {
+      "__init__": "(self, *args, **kwargs)",
+      "load": "(self, path: pathlib.Path) -> dict[str, typing.Any]"
+    }
+  },
+  "reade.core.interfaces.ConnectionInterface": {
+    "bases": [
+      "typing.Protocol"
+    ],
+    "members": {
+      "__enter__": "(self) -> Self",
+      "__exit__": "(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: traceback | None) -> None",
+      "__init__": "(self, *args, **kwargs)",
+      "close": "(self) -> None",
+      "connect": "(self) -> None",
+      "is_connected": "(self) -> bool",
+      "ping": "(self) -> bool"
+    }
+  },
+  "reade.core.models.DB_METADATA_REGISTRY": "{<DbType.MYSQL: 'mysql'>: DbMetadata(db_type=<DbType.MYSQL: 'mysql'>, display_name='MySQL', default_port=3306, default_driver='pymysql', uri_scheme='mysql+pymysql'), <DbType.POSTGRESQL: 'postgresql'>: DbMetadata(db_type=<DbType.POSTGRESQL: 'postgresql'>, display_name='PostgreSQL', default_port=5432, default_driver='psycopg', uri_scheme='postgresql+psycopg'), <DbType.SQLITE: 'sqlite'>: DbMetadata(db_type=<DbType.SQLITE: 'sqlite'>, display_name='SQLite', default_port=None, default_driver='sqlite3', uri_scheme='sqlite')}",
+  "reade.core.models.DbMetadata": {
+    "annotations": {
+      "db_type": "<enum 'DbType'>",
+      "default_driver": "<class 'str'>",
+      "default_port": "int | None",
+      "display_name": "<class 'str'>",
+      "uri_scheme": "<class 'str'>"
+    },
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__delattr__": "(self, name)",
+      "__eq__": "(self, other)",
+      "__hash__": "(self)",
+      "__init__": "(self, db_type: reade.core.enums.db_type.DbType, display_name: str, default_port: int | None, default_driver: str, uri_scheme: str) -> None",
+      "__match_args__": "('db_type', 'display_name', 'default_port', 'default_driver', 'uri_scheme')",
+      "__repr__": "(self)",
+      "__setattr__": "(self, name, value)"
+    }
+  },
+  "reade.data_io.execute_query": "(connector: reade.core.base.connector.ConnectionBase[typing.Any], sql: str) -> list[tuple[typing.Any, ...]]",
+  "reade.db.MysqlConnector": {
+    "annotations": {
+      "db_type": "typing.ClassVar[reade.core.enums.db_type.DbType]"
+    },
+    "bases": [
+      "reade.core.base.connector.ConnectionBase"
+    ],
+    "members": {
+      "__init__": "(self, host: str, database: str, user: str, password: str, port: int = 3306, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None",
+      "close": "(self) -> None",
+      "connect": "(self) -> None",
+      "db_type": "<DbType.MYSQL: 'mysql'>",
+      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "is_connected": "(self) -> bool",
+      "ping": "(self) -> bool"
+    }
+  },
+  "reade.db.PostgresConnector": {
+    "annotations": {
+      "db_type": "typing.ClassVar[reade.core.enums.db_type.DbType]"
+    },
+    "bases": [
+      "reade.core.base.connector.ConnectionBase"
+    ],
+    "members": {
+      "__init__": "(self, host: str, database: str, user: str, password: str, port: int = 5432, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None",
+      "close": "(self) -> None",
+      "connect": "(self) -> None",
+      "db_type": "<DbType.POSTGRESQL: 'postgresql'>",
+      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "is_connected": "(self) -> bool",
+      "ping": "(self) -> bool"
+    }
+  },
+  "reade.db.SqliteConnector": {
+    "annotations": {
+      "db_type": "typing.ClassVar[reade.core.enums.db_type.DbType]"
+    },
+    "bases": [
+      "reade.core.base.connector.ConnectionBase"
+    ],
+    "members": {
+      "__init__": "(self, database: str) -> None",
+      "close": "(self) -> None",
+      "connect": "(self) -> None",
+      "db_type": "<DbType.SQLITE: 'sqlite'>",
+      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "is_connected": "(self) -> bool",
+      "ping": "(self) -> bool"
+    }
+  },
+  "reade.dq.DqResult": {
+    "annotations": {
+      "dimension": "<class 'str'>",
+      "passed": "<class 'bool'>",
+      "rule_results": "tuple[reade.validation.models.RuleResult, ...]"
+    },
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__delattr__": "(self, name)",
+      "__eq__": "(self, other)",
+      "__hash__": "(self)",
+      "__init__": "(self, dimension: str, passed: bool, rule_results: tuple[reade.validation.models.RuleResult, ...]) -> None",
+      "__match_args__": "('dimension', 'passed', 'rule_results')",
+      "__repr__": "(self)",
+      "__setattr__": "(self, name, value)"
+    }
+  },
+  "reade.dq.VolumeDimension": {
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__init__": "(self, table: str, min_rows: int = 1) -> None",
+      "assess": "(self, connector: reade.core.base.connector.ConnectionBase[typing.Any]) -> reade.dq.models.DqResult"
+    }
+  },
+  "reade.sql.RenderedQuery": {
+    "annotations": {
+      "params": "dict[str, typing.Any]",
+      "sql": "<class 'str'>"
+    },
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__delattr__": "(self, name)",
+      "__eq__": "(self, other)",
+      "__hash__": "(self)",
+      "__init__": "(self, sql: str, params: dict[str, typing.Any]) -> None",
+      "__match_args__": "('sql', 'params')",
+      "__repr__": "(self)",
+      "__setattr__": "(self, name, value)"
+    }
+  },
+  "reade.sql.render_template": "(template_name: str, dialect: reade.core.enums.db_type.DbType, context: collections.abc.Mapping[str, typing.Any] | None = None, /, *, search_paths: collections.abc.Sequence[str | pathlib.Path] | None = None) -> reade.sql.models.RenderedQuery",
+  "reade.validation.RowCountRule": {
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__init__": "(self, table: str, min_rows: int = 1) -> None",
+      "evaluate": "(self, connector: reade.core.base.connector.ConnectionBase[typing.Any]) -> reade.validation.models.RuleResult"
+    }
+  },
+  "reade.validation.RuleResult": {
+    "annotations": {
+      "observed": "<class 'int'>",
+      "passed": "<class 'bool'>",
+      "rule": "<class 'str'>",
+      "threshold": "<class 'int'>"
+    },
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__delattr__": "(self, name)",
+      "__eq__": "(self, other)",
+      "__hash__": "(self)",
+      "__init__": "(self, rule: str, passed: bool, observed: int, threshold: int) -> None",
+      "__match_args__": "('rule', 'passed', 'observed', 'threshold')",
+      "__repr__": "(self)",
+      "__setattr__": "(self, name, value)"
+    }
+  }
+}

@@ -61,8 +61,10 @@ dmyp.json
 .ruff_cache/
 .sourcery/
 
-# Claude Code local settings
-.claude/
+# Claude Code: shared settings and commands are tracked; local settings stay out
+.claude/*
+!.claude/settings.json
+!.claude/commands/
 
 # Personal helper scripts
 scripts/
@@ -95,7 +97,8 @@ build/
 docs/_build/
 site/
 # Internal process notes stay out of the public repo
-docs/internal/
+# (no trailing slash: the pattern must also match when the path is a symlink)
+docs/internal
 
 # Temporary files
 *.tmp

@@ -144,10 +144,15 @@ Adds no v0.2.0 feature scope.
 - CLAUDE.md hardening: replace the discretionary check-running line with a
   completion contract; add TDD and hook-safety clauses (see PR diff)
 - Public-API snapshot test (pays down the `inspect.signature` IOU):
-  `tests/test_public_api.py` builds `{qualified_name: str(inspect.signature)}`
-  over exported public symbols and compares against
-  `tests/snapshots/public_api.json`. Failure message must state: an API
-  contract change requires a design-review note in the PR.
+  `tests/unit/test_public_api.py` pins the public surface — the
+  `__all__` names of every feature package and core subpackage
+  (structurally discovered; a public package missing `__all__` fails
+  the test; the root namespaces are asserted publicly empty) — and
+  compares against `tests/snapshots/public_api.json`. Functions pin as
+  signature strings; classes pin as their body-defined members plus
+  annotations, so a member joining a Protocol or ABC trips the pin,
+  not only a top-level signature change. Failure message must state:
+  an API contract change requires a design-review note in the PR.
   - Known interaction: Sprint 2.2's pre-registered contract breaks
     (`params` on `execute()`, `db_type` joining `ConnectionInterface`,
     the protocol retype of the consumer seams) will turn this test red
@@ -166,11 +171,14 @@ Adds no v0.2.0 feature scope.
 - DoD:
   - `make check-all` green, including `lint-imports` and the coverage gate
   - Red-light proofs captured in the execution report, each then reverted:
-    (1) scratch edit to one public signature → snapshot test fails with the
-        intended message
+    (1) two captures — a scratch edit to one top-level public signature,
+        and a scratch member added to a protocol — snapshot test fails
+        with the intended message in both
     (2) scratch wrong-direction import (e.g., `config` imports `db`) →
         `lint-imports` fails
-    (3) `--cov-fail-under=101` → coverage gate fails
+    (3) a coverage floor above the measured total → coverage gate fails
+        (pytest-cov rejects floors over 100 as a usage error, so the
+        proof uses e.g. `--cov-fail-under=99` against 98% coverage)
   - Human-verified in a fresh session: PostToolUse hook fires on an edit;
     `/sprint-start` reproduces the session-start ritual
   - Single PR (`chore:` prefix), squash merge; no new runtime dependencies
