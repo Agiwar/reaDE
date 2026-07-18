@@ -136,12 +136,59 @@ consumer benefit, and the tag keeps the phase installable via
   caveat is removed by the PR that ships `ident` (the general pre-alpha
   and not-yet-published notes stay until their own milestones).
 
+**Sprint T1 — verification-loop tooling (chore)**
+
+Lands before Sprint 2.2 so data_io is built inside the loop.
+Adds no v0.2.0 feature scope.
+
+- CLAUDE.md hardening: replace the discretionary check-running line with a
+  completion contract; add TDD and hook-safety clauses (see PR diff)
+- Public-API snapshot test (pays down the `inspect.signature` IOU):
+  `tests/test_public_api.py` builds `{qualified_name: str(inspect.signature)}`
+  over exported public symbols and compares against
+  `tests/snapshots/public_api.json`. Failure message must state: an API
+  contract change requires a design-review note in the PR.
+  - Known interaction: Sprint 2.2's pre-registered contract breaks
+    (`params` on `execute()`, `db_type` joining `ConnectionInterface`,
+    the protocol retype of the consumer seams) will turn this test red
+    on purpose. Updating the snapshot inside that PR, with the
+    design-review note, is the mechanism working — not a defect.
+- Layered-import contract: import-linter as a dev dependency; `layers`
+  contract encoding `dq → validation → data_io → sql → db → config → core`;
+  wired into pre-commit and `make check-all`
+- Coverage gate: `--cov-fail-under=90` on the coverage target;
+  `check-all` runs the gated target (plain `pytest` stays fast)
+- Claude Code mechanisms: `.claude/settings.json` PostToolUse hook
+  (ruff + mypy after Edit|Write); `.claude/commands/sprint-start.md`
+  and `sprint-close.md`
+- Out of scope → IOU: Stop-hook enforcement (revisit after two sprints of
+  stable signals); per-module coverage gating (global 90 floor for now)
+- DoD:
+  - `make check-all` green, including `lint-imports` and the coverage gate
+  - Red-light proofs captured in the execution report, each then reverted:
+    (1) scratch edit to one public signature → snapshot test fails with the
+        intended message
+    (2) scratch wrong-direction import (e.g., `config` imports `db`) →
+        `lint-imports` fails
+    (3) `--cov-fail-under=101` → coverage gate fails
+  - Human-verified in a fresh session: PostToolUse hook fires on an edit;
+    `/sprint-start` reproduces the session-start ritual
+  - Single PR (`chore:` prefix), squash merge; no new runtime dependencies
+
 **Sprint 2.2 — data_io**
 - Execute query / read / write; streaming vs. materialized results
-- Breaking change (pre-registered at the 2.1 spec): `execute()` on
-  `ConnectionInterface`/`ConnectionBase` gains a `params` argument so
-  `RenderedQuery` executes through the SDK — post-Phase-0 contract
-  change; design-review note due in the implementing PR
+- Breaking changes (pre-registered at the 2.1 spec and its kickoff
+  consults; post-Phase-0 contract changes — one design-review note
+  covers the bundle, due in the implementing PR):
+  - `execute()` on `ConnectionInterface`/`ConnectionBase` gains a
+    `params` argument so `RenderedQuery` executes through the SDK
+  - `db_type` joins `ConnectionInterface`, riding the same break — the
+    ABC `ClassVar` shipped in Sprint 2.1; this formalizes it for
+    protocol-only connectors
+  - `execute_query` / `RowCountRule.evaluate` / `VolumeDimension.assess`
+    retype from `ConnectionBase[Any]` to the `ConnectionInterface`
+    protocol — today a protocol-only connector cannot be passed at
+    these seams, contradicting the third-party plug-in promise
 - Consistent error mapping into `core.errors`
 - CSV reader (relocated from config — CSV is data, not config; see PR #7's
   design notes)
