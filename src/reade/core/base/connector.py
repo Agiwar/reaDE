@@ -100,15 +100,27 @@ class ConnectionBase[T](ABC):
         ...
 
     @abstractmethod
-    def execute(self, sql: str) -> list[tuple[Any, ...]]:
+    def execute(
+        self, sql: str, params: dict[str, Any] | None = None
+    ) -> list[tuple[Any, ...]]:
         """Execute a SQL statement and return all result rows, materialized.
 
         Statements without a result set (DDL, INSERT) return an empty
         list. Driver specifics — cursors, fetch styles — are the
         implementation's concern and never leak to callers.
 
+        Concrete connectors normalize falsy ``params`` (``None`` or an
+        empty mapping) to no-parameters before the driver call — the
+        ``ConnectionInterface`` contract: pyformat drivers %-format the
+        statement whenever parameters are present, which would corrupt
+        a literal ``%`` in a statement that binds nothing.
+
         Args:
-            sql: The SQL statement to execute.
+            sql: The SQL statement to execute, in the dialect's
+                placeholder style for any bound parameters.
+            params: Values for the statement's placeholders, keyed by
+                placeholder name (e.g. ``RenderedQuery.params``).
+                ``None`` or ``{}`` mean the statement binds nothing.
 
         Returns:
             All result rows as tuples.

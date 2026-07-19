@@ -1,6 +1,5 @@
 """Typed loading layer on top of the frozen dict-based loaders."""
 
-import os
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
@@ -58,7 +57,8 @@ def load_config[ModelT: BaseModel](
             Defaults to ``os.environ``, where overrides apply
             process-wide — every ``load_config`` call sees the same
             ``READE__*`` variables. Pass ``{}`` to disable overrides for
-            a call, or a filtered mapping to scope which variables apply.
+            a call, or a filtered mapping to substitute the process
+            environment.
 
     Returns:
         A validated instance of ``model``.
@@ -94,9 +94,7 @@ def load_config[ModelT: BaseModel](
         ) from e
 
     data = ConfigLoaderFactory.get_loader(file_type).load(path)
-    data = merge_env_overrides(
-        data, os.environ if environ is None else environ, scope=scope
-    )
+    data = merge_env_overrides(data, environ=environ, scope=scope)
     try:
         return model.model_validate(data)
     except ValidationError as e:

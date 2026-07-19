@@ -35,6 +35,7 @@ class FakeCursor:
         self.rows = rows
         self.description = description
         self.executed: list[str] = []
+        self.executed_params: list[dict[str, Any] | None] = []
 
     def __enter__(self) -> Self:
         return self
@@ -47,8 +48,9 @@ class FakeCursor:
     ) -> None:
         return None
 
-    def execute(self, sql: str) -> None:
+    def execute(self, sql: str, params: dict[str, Any] | None = None) -> None:
         self.executed.append(sql)
+        self.executed_params.append(params)
 
     def fetchall(self) -> list[Any]:
         if self.description is None:
@@ -288,7 +290,7 @@ class TestExecute:
     def test_execute_failure_maps_to_db_error_with_cause(
         self, connector: PostgresConnector, cursor: FakeCursor
     ) -> None:
-        def failing_execute(sql: str) -> None:
+        def failing_execute(sql: str, params: dict[str, Any] | None = None) -> None:
             raise FakePsycopgError("syntax error")
 
         cursor.execute = failing_execute  # type: ignore[method-assign]
@@ -298,6 +300,35 @@ class TestExecute:
             connector.execute("SELEC 1")
 
         assert isinstance(exc_info.value.__cause__, FakePsycopgError)
+
+    def test_execute_passes_bound_params_to_the_driver(
+        self, connector: PostgresConnector, cursor: FakeCursor
+    ) -> None:
+        connector.connect()
+
+        connector.execute("SELECT %(x)s", {"x": 1})
+
+        assert cursor.executed_params[-1] == {"x": 1}
+
+    def test_execute_without_params_hands_none_to_the_driver(
+        self, connector: PostgresConnector, cursor: FakeCursor
+    ) -> None:
+        connector.connect()
+
+        connector.execute("SELECT 1")
+
+        assert cursor.executed_params[-1] is None
+
+    def test_execute_normalizes_empty_params_to_none(
+        self, connector: PostgresConnector, cursor: FakeCursor
+    ) -> None:
+        # pyformat drivers %-format whenever parameters are present; the
+        # connector must strip an empty mapping so a literal % survives.
+        connector.connect()
+
+        connector.execute("SELECT '100%'", {})
+
+        assert cursor.executed_params[-1] is None
 
 
 class TestPing:

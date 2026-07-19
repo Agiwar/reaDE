@@ -25,10 +25,13 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from reade.core.errors import DbError
+from reade.data_io import execute_query
 from reade.db import MysqlConnector, PostgresConnector
+from reade.sql import render_template
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
+    from pathlib import Path
 
     from reade.core.base.connector import ConnectionBase
 
@@ -171,6 +174,63 @@ class TestDurability:
         finally:
             with make_connector() as cleanup:
                 cleanup.execute("DROP TABLE IF EXISTS reade_it_durability")
+
+
+class TestBoundParams:
+    """The 2.2 execute seam against real drivers on the wire."""
+
+    def test_hostile_value_binds_through_the_full_sdk_path(
+        self, connector: "ConnectionBase[Any]", tmp_path: "Path"
+    ) -> None:
+        # Cross-dialect DoD leg: render → bind → RenderedQuery →
+        # execute_query. The value must travel as a parameter, never in
+        # the SQL text; SQLite runs the identical path in the unit suite.
+        hostile = "1; DROP TABLE fact_orders;--"
+        (tmp_path / "reflect_value.sql.j2").write_text(
+            'SELECT {{ v | bind("v") }} AS v'
+        )
+
+        with connector:
+            rendered = render_template(
+                "reflect_value",
+                connector.db_type,
+                {"v": hostile},
+                search_paths=[tmp_path],
+            )
+            rows = execute_query(connector, rendered.sql, rendered.params)
+
+        assert hostile not in rendered.sql
+        assert rows == [(hostile,)]
+
+    def test_literal_percent_survives_empty_params_at_the_seam(
+        self, connector: "ConnectionBase[Any]"
+    ) -> None:
+        # Ruled regression (2.2 kickoff): pyformat drivers %-format the
+        # statement whenever parameters are present, so the connector must
+        # normalize an empty mapping to None or a literal % corrupts.
+        # Asserted on both pyformat backends only — SQLite is exempt: its
+        # named placeholder style never %-formats, so the test would be
+        # vacuous there.
+        with connector:
+            assert execute_query(connector, "SELECT '100%'", {}) == [("100%",)]
+
+    def test_bound_param_insert_is_durable(
+        self, make_connector: "Callable[[], ConnectionBase[Any]]"
+    ) -> None:
+        # The D9 durability semantic, now through the params path.
+        with make_connector() as writer:
+            writer.execute("DROP TABLE IF EXISTS reade_it_params")
+            writer.execute("CREATE TABLE reade_it_params (v VARCHAR(64))")
+            writer.execute("INSERT INTO reade_it_params VALUES (%(v)s)", {"v": "bound"})
+
+        try:
+            with make_connector() as reader:
+                count = reader.execute("SELECT COUNT(*) FROM reade_it_params")
+
+                assert count == [(1,)]
+        finally:
+            with make_connector() as cleanup:
+                cleanup.execute("DROP TABLE IF EXISTS reade_it_params")
 
 
 class TestConnectFailure:

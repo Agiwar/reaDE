@@ -156,14 +156,23 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
         """
         return self._connection is not None
 
-    def execute(self, sql: str) -> list[tuple[Any, ...]]:
+    def execute(
+        self, sql: str, params: dict[str, Any] | None = None
+    ) -> list[tuple[Any, ...]]:
         """Execute a SQL statement and return all result rows, materialized.
 
         Statements without a result set (DDL, INSERT) return an empty
-        list.
+        list. Falsy ``params`` are normalized to no-parameters before
+        the driver call, per the ``ConnectionInterface`` contract —
+        pymysql %-formats the statement whenever parameters are present,
+        which would corrupt a literal ``%``.
 
         Args:
-            sql: The SQL statement to execute.
+            sql: The SQL statement to execute, with pyformat
+                (``%(key)s``) placeholders for any bound parameters.
+            params: Values for the statement's placeholders, keyed by
+                placeholder name. ``None`` or ``{}`` mean the statement
+                binds nothing.
 
         Returns:
             All result rows as tuples.
@@ -173,9 +182,11 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
             DbError: If the driver fails to execute the statement or
                 fetch its results.
         """
+        if not params:
+            params = None
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute(sql)
+                cursor.execute(sql, params)
                 # description is the no-result-set signal across drivers;
                 # gate on it rather than trusting fetch semantics.
                 if cursor.description is None:

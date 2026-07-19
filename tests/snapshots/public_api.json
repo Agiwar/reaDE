@@ -60,7 +60,7 @@
     }
   },
   "reade.config.load_config": "(name: str | pathlib.Path, *, model: type[ModelT], search_paths: collections.abc.Sequence[str | pathlib.Path] | None = None, environ: collections.abc.Mapping[str, str] | None = None) -> ModelT",
-  "reade.config.merge_env_overrides": "(data: dict[str, typing.Any], environ: collections.abc.Mapping[str, str] = <_Environ>, *, scope: str | None = None) -> dict[str, typing.Any]",
+  "reade.config.merge_env_overrides": "(data: dict[str, typing.Any], *, environ: collections.abc.Mapping[str, str] | None = None, scope: str | None = None) -> dict[str, typing.Any]",
   "reade.core.base.ConnectionBase": {
     "annotations": {
       "db_type": "typing.ClassVar[reade.core.enums.db_type.DbType]"
@@ -76,7 +76,7 @@
       "close": "(self) -> None",
       "connect": "(self) -> None",
       "connection": "property(self) -> T",
-      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "execute": "(self, sql: str, params: dict[str, typing.Any] | None = None) -> list[tuple[typing.Any, ...]]",
       "is_connected": "(self) -> bool",
       "ping": "(self) -> bool"
     }
@@ -172,6 +172,8 @@
       "__init__": "(self, *args, **kwargs)",
       "close": "(self) -> None",
       "connect": "(self) -> None",
+      "db_type": "property(self) -> reade.core.enums.db_type.DbType",
+      "execute": "(self, sql: str, params: dict[str, typing.Any] | None = None) -> list[tuple[typing.Any, ...]]",
       "is_connected": "(self) -> bool",
       "ping": "(self) -> bool"
     }
@@ -198,7 +200,7 @@
       "__setattr__": "(self, name, value)"
     }
   },
-  "reade.data_io.execute_query": "(connector: reade.core.base.connector.ConnectionBase[typing.Any], sql: str) -> list[tuple[typing.Any, ...]]",
+  "reade.data_io.execute_query": "(connector: reade.core.interfaces.connector.ConnectionInterface, sql: str, params: dict[str, typing.Any] | None = None) -> list[tuple[typing.Any, ...]]",
   "reade.db.MysqlConnector": {
     "annotations": {
       "db_type": "typing.ClassVar[reade.core.enums.db_type.DbType]"
@@ -211,7 +213,7 @@
       "close": "(self) -> None",
       "connect": "(self) -> None",
       "db_type": "<DbType.MYSQL: 'mysql'>",
-      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "execute": "(self, sql: str, params: dict[str, typing.Any] | None = None) -> list[tuple[typing.Any, ...]]",
       "is_connected": "(self) -> bool",
       "ping": "(self) -> bool"
     }
@@ -228,7 +230,7 @@
       "close": "(self) -> None",
       "connect": "(self) -> None",
       "db_type": "<DbType.POSTGRESQL: 'postgresql'>",
-      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "execute": "(self, sql: str, params: dict[str, typing.Any] | None = None) -> list[tuple[typing.Any, ...]]",
       "is_connected": "(self) -> bool",
       "ping": "(self) -> bool"
     }
@@ -245,7 +247,7 @@
       "close": "(self) -> None",
       "connect": "(self) -> None",
       "db_type": "<DbType.SQLITE: 'sqlite'>",
-      "execute": "(self, sql: str) -> list[tuple[typing.Any, ...]]",
+      "execute": "(self, sql: str, params: dict[str, typing.Any] | None = None) -> list[tuple[typing.Any, ...]]",
       "is_connected": "(self) -> bool",
       "ping": "(self) -> bool"
     }
@@ -275,7 +277,7 @@
     ],
     "members": {
       "__init__": "(self, table: str, min_rows: int = 1) -> None",
-      "assess": "(self, connector: reade.core.base.connector.ConnectionBase[typing.Any]) -> reade.dq.models.DqResult"
+      "assess": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.dq.models.DqResult"
     }
   },
   "reade.sql.RenderedQuery": {
@@ -303,7 +305,7 @@
     ],
     "members": {
       "__init__": "(self, table: str, min_rows: int = 1) -> None",
-      "evaluate": "(self, connector: reade.core.base.connector.ConnectionBase[typing.Any]) -> reade.validation.models.RuleResult"
+      "evaluate": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.validation.models.RuleResult"
     }
   },
   "reade.validation.RuleResult": {
