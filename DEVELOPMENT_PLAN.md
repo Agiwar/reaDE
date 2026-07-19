@@ -158,6 +158,8 @@ Adds no v0.2.0 feature scope.
     the protocol retype of the consumer seams) will turn this test red
     on purpose. Updating the snapshot inside that PR, with the
     design-review note, is the mechanism working — not a defect.
+    [2026-07-19, 2.2 kickoff amendment: the bundle is now FOUR
+    breaks — Sprint 2.2's entry is the authoritative list.]
 - Layered-import contract: import-linter as a dev dependency; `layers`
   contract encoding `dq → validation → data_io → sql → db → config → core`;
   wired into pre-commit and `make check-all`
@@ -184,22 +186,65 @@ Adds no v0.2.0 feature scope.
   - Single PR (`chore:` prefix), squash merge; no new runtime dependencies
 
 **Sprint 2.2 — data_io**
-- Execute query / read / write; streaming vs. materialized results
+- Execute query / read / write. Results decision (2.2 kickoff):
+  database results stay materialized (`list[tuple]`) — the DQ golden
+  path returns counts and aggregates, and query results are bounded by
+  query semantics; files are not, so the CSV reader streams (it yields
+  rows; `list()` materializes).
 - Breaking changes (pre-registered at the 2.1 spec and its kickoff
-  consults; post-Phase-0 contract changes — one design-review note
-  covers the bundle, itemizing each break, due in the implementing PR):
-  - `execute()` on `ConnectionInterface`/`ConnectionBase` gains a
-    `params` argument so `RenderedQuery` executes through the SDK
-  - `db_type` joins `ConnectionInterface`, riding the same break — the
-    ABC `ClassVar` shipped in Sprint 2.1; this formalizes it for
-    protocol-only connectors
+  consults, completed to four at the 2.2 kickoff; post-Phase-0 contract
+  changes — one design-review note covers the bundle, itemizing each
+  break, due in the implementing PR):
+  - `ConnectionInterface` gains `execute` — full signature
+    `execute(self, sql: str, params: dict[str, Any] | None = None) ->
+    list[tuple[Any, ...]]` — and `ConnectionBase` plus the three
+    connectors adopt the identical signature, so `RenderedQuery`
+    executes through the SDK. Falsy `params` normalize to `None` at
+    the connector before reaching the driver (pyformat drivers
+    %-format the statement whenever parameters are present, which
+    would corrupt a literal `%`); the interface docstring states that
+    promise, so it binds every implementer, not just the shipped
+    connectors.
+  - `db_type` joins `ConnectionInterface` as a read-only property
+    member — the bundle's second break. The ABC `ClassVar` shipped in
+    Sprint 2.1; this formalizes it for protocol-only connectors.
   - `execute_query` / `RowCountRule.evaluate` / `VolumeDimension.assess`
     retype from `ConnectionBase[Any]` to the `ConnectionInterface`
     protocol — today a protocol-only connector cannot be passed at
-    these seams, contradicting the third-party plug-in promise
+    these seams, contradicting the third-party plug-in promise.
+    `execute_query` becomes `(connector, sql, params=None)`; rendered
+    queries execute as `execute_query(connector, rendered.sql,
+    rendered.params)`.
+  - Fourth break (added by this kickoff amendment):
+    `merge_env_overrides` drops its import-time `environ=os.environ`
+    default for a call-time `None` sentinel, and `environ` becomes
+    keyword-only — restoring consistency with `load_config`, which has
+    resolved the environment at call time since Sprint 1.1.
+  - Declared docstring-only rider (docstrings are not pinned):
+    `RenderedQuery`'s "pass `None`, not `{}`" caller guidance is
+    superseded by the connector-level normalization above; the bundle
+    PR updates that docstring.
 - Consistent error mapping into `core.errors`
-- CSV reader (relocated from config — CSV is data, not config; see PR #7's
-  design notes)
+- CSV reader and writer (relocated from config — CSV is data, not
+  config; see PR #7's design notes): `read_csv` / `write_csv`. Rows
+  are dicts keyed by header; values stay raw strings (coercion is the
+  validation layer's job); ragged rows raise. Parse and shape failures
+  map to `DataIoError`; `OSError` passes through unchanged (the
+  config-layer precedent).
+- DoD: 1.1 baseline (≥90% coverage gate on the module in CI, README
+  section, example) + `make check-all` green at every completion claim
+  (the standing completion contract) + the bundle's single itemized
+  design-review note with the public-API snapshot updated in the same
+  PR + injection test through the full path (a hostile value bound via
+  `bind` executes via `execute_query` and lands in the data, never in
+  the SQL text — asserted on all three dialects: SQLite locally, both
+  servers dockerized) + a
+  literal-`%` regression with empty params asserted on both dockerized
+  pyformat backends (SQLite is exempt: its named placeholder style
+  never %-formats) + bound-param INSERT durability cross-backend
+  (insert → close → reopen → count) + CSV error-contract tests
+  including `FileNotFoundError` passthrough + the README "arrives with
+  the 2.2 seam" caveats removed by the PRs that ship the seam.
 
 **Gate → tag `v0.2.0`.**
 
@@ -224,6 +269,10 @@ Adds no v0.2.0 feature scope.
 
 - API freeze review: walk every public symbol, mark experimental ones
 - Optional-scope decision point: add Trino connector here if still wanted
+- Connection ergonomics review (moved here at the 2.2 kickoff; the
+  Phase 1 publish deferral moved broad adoption to Phase 4): URI-style
+  connection strings as a config input, TLS/charset connection
+  options, password-in-URI documentation — designed together, additive
 - Docs: full README, API reference, 3+ examples
 - Performance benchmark on hot paths (config load, query execute)
 - `v1.0.0rc1` on PyPI → soak period → `v1.0.0`
