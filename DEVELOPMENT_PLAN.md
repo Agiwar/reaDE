@@ -206,7 +206,7 @@ Adds no v0.2.0 feature scope.
     promise, so it binds every implementer, not just the shipped
     connectors.
   - `db_type` joins `ConnectionInterface` as a read-only property
-    member, riding the same break — the ABC `ClassVar` shipped in
+    member — the bundle's second break. The ABC `ClassVar` shipped in
     Sprint 2.1; this formalizes it for protocol-only connectors.
   - `execute_query` / `RowCountRule.evaluate` / `VolumeDimension.assess`
     retype from `ConnectionBase[Any]` to the `ConnectionInterface`
@@ -232,10 +232,13 @@ Adds no v0.2.0 feature scope.
   map to `DataIoError`; `OSError` passes through unchanged (the
   config-layer precedent).
 - DoD: 1.1 baseline (≥90% coverage gate on the module in CI, README
-  section, example) + the bundle's single itemized design-review note
-  with the public-API snapshot updated in the same PR + injection test
-  through the full path (a hostile value bound via `bind` executes via
-  `execute_query` and lands in the data, never in the SQL text) + a
+  section, example) + `make check-all` green at every completion claim
+  (the standing completion contract) + the bundle's single itemized
+  design-review note with the public-API snapshot updated in the same
+  PR + injection test through the full path (a hostile value bound via
+  `bind` executes via `execute_query` and lands in the data, never in
+  the SQL text — asserted on all three dialects: SQLite locally, both
+  servers dockerized) + a
   literal-`%` regression with empty params asserted on both dockerized
   pyformat backends (SQLite is exempt: its named placeholder style
   never %-formats) + bound-param INSERT durability cross-backend
