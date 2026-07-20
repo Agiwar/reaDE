@@ -3,9 +3,8 @@
 Sprint 2.1 acceptance script. Renders one template for all three
 supported dialects — same template, dialect-correct placeholders and
 identifier quoting — then executes the SQLite variant with its bound
-parameters through the connector's ``connection`` escape hatch.
-Executing bound parameters through the SDK itself (``execute_query``)
-arrives with the Sprint 2.2 data_io seam.
+parameters through the SDK seam: render → ``RenderedQuery`` →
+``execute_query``, values never in the SQL text.
 
 Run with: uv run python examples/sql_render.py
 """
@@ -13,6 +12,7 @@ Run with: uv run python examples/sql_render.py
 from pathlib import Path
 
 from reade.core.enums import DbType
+from reade.data_io import execute_query
 from reade.db import SqliteConnector
 from reade.sql import render_template
 
@@ -32,12 +32,12 @@ def main() -> None:
         print(f"  sql:    {' '.join(rendered.sql.split())}")
         print(f"  params: {rendered.params}")
 
-    # db: execute the SQLite variant with its bound parameters. Until
-    # the 2.2 params seam lands in execute_query, hand the RenderedQuery
-    # to the driver via the documented connection escape hatch.
+    # data_io: execute the SQLite variant with its bound parameters
+    # through the SDK seam. Bulk seeding stays on the connection escape
+    # hatch — executemany is the caller's domain, not the seam's.
     with SqliteConnector(database=":memory:") as connector:
-        connector.connection.execute(
-            "CREATE TABLE events (event_name TEXT, created_at TEXT)"
+        execute_query(
+            connector, "CREATE TABLE events (event_name TEXT, created_at TEXT)"
         )
         connector.connection.executemany(
             "INSERT INTO events VALUES (?, ?)",
@@ -51,7 +51,7 @@ def main() -> None:
         rendered = render_template(
             "daily_events", connector.db_type, context, search_paths=[TEMPLATES]
         )
-        rows = connector.connection.execute(rendered.sql, rendered.params).fetchall()
+        rows = execute_query(connector, rendered.sql, rendered.params)
         print(f"[execute]    {rows}")
 
     expected = [("signup", 2), ("login", 1)]

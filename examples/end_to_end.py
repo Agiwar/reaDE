@@ -2,17 +2,19 @@
 
 Sprint 0.2 acceptance script (DoD item 1). Exercises the full dependency
 chain against SQLite using only the public API: load a YAML config, open a
-connection, render a SQL template, execute it, evaluate a validation rule,
-and aggregate it into a data-quality dimension.
+connection, render SQL templates, execute them (with bound parameters),
+round-trip an aggregate through CSV, evaluate a validation rule, and
+aggregate it into a data-quality dimension.
 
 Run with: uv run python examples/end_to_end.py
 """
 
+import tempfile
 from pathlib import Path
 
 from reade.config import ConfigLoaderFactory
 from reade.core.enums import FileType
-from reade.data_io import execute_query
+from reade.data_io import execute_query, read_csv, write_csv
 from reade.db import SqliteConnector
 from reade.dq import VolumeDimension
 from reade.sql import render_template
@@ -76,6 +78,22 @@ def main() -> None:
         # dq: the volume dimension, composed from the validation rule.
         dq_result = VolumeDimension(table="events", min_rows=1).assess(connector)
         print(f"[dq]         dimension={dq_result.dimension} passed={dq_result.passed}")
+
+    # data_io: persist the aggregate as CSV and read it back — dict rows
+    # keyed by header, values as raw strings (validation owns coercion).
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        csv_path = Path(tmp_dir) / "daily_events.csv"
+        write_csv(
+            csv_path,
+            [{"event_name": name, "event_count": count} for name, count in daily_rows],
+        )
+        readback = list(read_csv(csv_path))
+    print(f"[data_io]    csv round-trip: {readback}")
+    if readback != [
+        {"event_name": "signup", "event_count": "2"},
+        {"event_name": "login", "event_count": "1"},
+    ]:
+        raise SystemExit(f"unexpected csv round-trip: {readback}")
 
     if not dq_result.passed:
         raise SystemExit(1)
