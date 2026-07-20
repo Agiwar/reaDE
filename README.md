@@ -79,7 +79,7 @@ The entire chain now runs end-to-end against SQLite — see
 from reade.config import ConfigLoaderFactory, YamlLoader
 from reade.db import SqliteConnector
 from reade.sql import render_template
-from reade.data_io import execute_query
+from reade.data_io import execute_query, read_csv, write_csv
 from reade.validation import RowCountRule
 from reade.dq import VolumeDimension
 ```
@@ -92,7 +92,7 @@ from reade.dq import VolumeDimension
 | `config/` | ✅ Hardened (1.1) | YAML / JSON → typed objects; search paths; env overrides |
 | `db/` | ✅ Hardened (1.2) | SQLite / PostgreSQL / MySQL; lifecycle, health check, connect retry; dockerized integration tests |
 | `sql/` | ✅ Hardened (2.1) | `RenderedQuery` render contract; `bind`/`ident` filters; discovery convention; injection tests |
-| `data_io/` | ✅ Thin slice | Execute query → rows; readers/writers (incl. CSV) in Phase 2 |
+| `data_io/` | ✅ Hardened (2.2) | Bound-param execution through `execute_query`; streaming CSV reader/writer |
 | `validation/` | ✅ Thin slice | Row-count rule; more rules in Phase 3 |
 | `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
 
@@ -125,7 +125,7 @@ with SqliteConnector(database=config.database) as connector:
 ```
 
 - **Formats:** YAML (`.yaml` / `.yml`) and JSON (`.json`). CSV is data,
-  not config — it arrives as a `data_io` reader in Phase 2.
+  not config — it ships as `data_io`'s `read_csv` (see Data I/O below).
 - **Resolution:** a relative name is tried against `search_paths` in
   order (default: the current working directory only); absolute paths
   bypass the search; a miss raises `FileNotFoundError` listing every
@@ -249,6 +249,43 @@ rendered.params  # {"since": "2026-01-01"}
 See [`examples/sql_render.py`](examples/sql_render.py) — one template
 rendered for all three dialects, then executed with bound parameters on
 SQLite.
+
+## Data I/O
+
+Query execution and file I/O share one module: `execute_query` runs SQL
+(with bound parameters) through any connector, and `read_csv` /
+`write_csv` move tabular files with the same strictness the rest of the
+SDK applies to data.
+
+```python
+from reade.data_io import execute_query, read_csv, write_csv
+
+rows = execute_query(connector, rendered.sql, rendered.params)
+
+write_csv("daily_events.csv", [{"event_name": "signup", "event_count": 2}])
+for row in read_csv("daily_events.csv"):  # streams; list(...) materializes
+    print(row)                            # {'event_name': 'signup', ...}
+```
+
+- **`execute_query` takes any `ConnectionInterface` implementation** —
+  including third-party, protocol-only connectors; nothing needs to
+  inherit from reaDE. Empty `params` are safe through the SDK path
+  (connectors normalize them), so `rendered.params` passes straight
+  through whether or not the query binds values.
+- **`read_csv` streams dict rows keyed by the header.** Values arrive
+  as raw strings — type coercion belongs to the validation layer. The
+  header is validated at the call (missing file, missing header, and
+  duplicate names fail immediately); a row with the wrong number of
+  fields raises at that row rather than being silently padded — a DQ
+  toolkit that pads is misreporting the data it will later check.
+- **`write_csv` mirrors the reader:** header from the first row's keys,
+  rows consumed lazily, a row with mismatched keys raises.
+- **Errors:** parse and shape failures raise `DataIoError` (the parser
+  error attached as cause); `OSError` — including `FileNotFoundError` —
+  passes through unchanged, as in the config layer.
+
+See [`examples/end_to_end.py`](examples/end_to_end.py) — bound-param
+execution and a CSV round trip inside the full chain.
 
 ## MVP Scope
 

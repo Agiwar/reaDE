@@ -94,5 +94,8 @@ jobs:
       - name: Sql module coverage gate (>=90%)
         run: uv run pytest --cov=reade.sql --cov-fail-under=90 -q
 
+      - name: Data_io module coverage gate (>=90%)
+        run: uv run pytest --cov=reade.data_io --cov-fail-under=90 -q
+
       - name: Global coverage gate (>=90%)
         run: uv run pytest --cov=src --cov-fail-under=90 -q
