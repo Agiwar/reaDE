@@ -239,10 +239,12 @@ rendered.params  # {"since": "2026-01-01"}
 - **Discovery:** the packaged templates plus your `search_paths`,
   nothing else. Packaged names always win; a missing `search_paths`
   directory fails loud; lookup uses the fixed `<name>.sql.j2` form.
-- **Executing bound params through the SDK arrives with the 2.2
-  `data_io` seam.** Until then, hand `rendered.sql` / `rendered.params`
-  to your driver via the connector's `connection` escape hatch — and
-  pass `None`, not `{}`, when `params` is empty.
+- **Bound params execute through the SDK:**
+  `execute_query(connector, rendered.sql, rendered.params)` — safe even
+  when a query binds nothing, because connectors normalize empty params
+  to none (part of the `ConnectionInterface` contract). Only when
+  bypassing the SDK via the `connection` escape hatch must you pass
+  `None`, not `{}`, for empty params.
 
 See [`examples/sql_render.py`](examples/sql_render.py) — one template
 rendered for all three dialects, then executed with bound parameters on

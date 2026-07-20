@@ -61,6 +61,17 @@ class TestSqliteConnector:
         with SqliteConnector(database=db_path) as connector:
             assert connector.execute("SELECT COUNT(*) FROM t") == [(1,)]
 
+    def test_execute_binds_named_params(self) -> None:
+        with SqliteConnector(database=":memory:") as connector:
+            connector.execute("CREATE TABLE t (id INTEGER, name TEXT)")
+            connector.execute(
+                "INSERT INTO t VALUES (:id, :name)", {"id": 7, "name": "a"}
+            )
+
+            rows = connector.execute("SELECT name FROM t WHERE id = :id", {"id": 7})
+
+            assert rows == [("a",)]
+
     def test_execute_failure_raises_db_error_with_cause(self) -> None:
         with SqliteConnector(database=":memory:") as connector:
             with pytest.raises(DbError) as exc_info:

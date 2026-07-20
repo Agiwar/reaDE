@@ -1,10 +1,8 @@
 """Row count validation rule."""
 
-from typing import Any
-
-from reade.core.base.connector import ConnectionBase
 from reade.core.errors.base import ReadeError
 from reade.core.errors.validation import RuleError
+from reade.core.interfaces.connector import ConnectionInterface
 from reade.data_io import execute_query
 from reade.sql import render_template
 from reade.validation.models import RuleResult
@@ -27,11 +25,13 @@ class RowCountRule:
         self._table = table
         self._min_rows = min_rows
 
-    def evaluate(self, connector: ConnectionBase[Any]) -> RuleResult:
+    def evaluate(self, connector: ConnectionInterface) -> RuleResult:
         """Evaluate the rule against a connected database.
 
         Args:
-            connector: A connected database connector.
+            connector: A connected database connector — any
+                ``ConnectionInterface`` implementation, protocol-only
+                connectors included.
 
         Returns:
             The rule outcome; a count below the threshold yields
@@ -46,7 +46,7 @@ class RowCountRule:
         rendered = render_template(
             "row_count", connector.db_type, {"table": self._table}
         )
-        rows = execute_query(connector, rendered.sql)
+        rows = execute_query(connector, rendered.sql, rendered.params)
         try:
             observed = int(rows[0][0])
         except ReadeError:

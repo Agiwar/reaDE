@@ -81,14 +81,21 @@ class SqliteConnector(ConnectionBase[sqlite3.Connection]):
         """
         return self._connection is not None
 
-    def execute(self, sql: str) -> list[tuple[Any, ...]]:
+    def execute(
+        self, sql: str, params: dict[str, Any] | None = None
+    ) -> list[tuple[Any, ...]]:
         """Execute a SQL statement and return all result rows, materialized.
 
         Statements without a result set (DDL, INSERT) return an empty
-        list.
+        list. Falsy ``params`` are normalized to no-parameters before
+        the driver call, per the ``ConnectionInterface`` contract.
 
         Args:
-            sql: The SQL statement to execute.
+            sql: The SQL statement to execute, with named (``:key``)
+                placeholders for any bound parameters.
+            params: Values for the statement's placeholders, keyed by
+                placeholder name. ``None`` or ``{}`` mean the statement
+                binds nothing.
 
         Returns:
             All result rows as tuples.
@@ -98,8 +105,14 @@ class SqliteConnector(ConnectionBase[sqlite3.Connection]):
             DbError: If the driver fails to execute the statement or
                 fetch its results.
         """
+        if not params:
+            params = None
         try:
-            cursor = self.connection.execute(sql)
+            cursor = (
+                self.connection.execute(sql)
+                if params is None
+                else self.connection.execute(sql, params)
+            )
             rows = cursor.fetchall()
         except sqlite3.Error as e:
             raise DbError("Failed to execute SQL statement") from e

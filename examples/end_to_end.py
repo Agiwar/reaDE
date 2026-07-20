@@ -36,20 +36,35 @@ def main() -> None:
         # data_io: execute statements through the connector.
         execute_query(
             connector,
-            "CREATE TABLE events (id INTEGER PRIMARY KEY, name TEXT)",
+            "CREATE TABLE events (event_name TEXT, created_at TEXT)",
         )
         execute_query(
             connector,
-            "INSERT INTO events (name) VALUES ('signup'), ('login'), ('logout')",
+            "INSERT INTO events VALUES"
+            " ('signup', '2026-03-01'), ('signup', '2026-04-11'),"
+            " ('login', '2026-05-20'), ('logout', '2025-11-30')",
         )
 
         # sql: render a packaged Jinja2 template into a SQL statement plus
-        # its bound parameters (empty here — row_count binds no values;
-        # executing params through the SDK arrives with the 2.2 seam).
+        # its bound parameters (empty here — row_count binds no values).
         rendered = render_template("row_count", connector.db_type, {"table": "events"})
-        rows = execute_query(connector, rendered.sql)
+        rows = execute_query(connector, rendered.sql, rendered.params)
         print(f"[sql]        rendered: {rendered.sql.strip()}")
         print(f"[data_io]    result rows: {rows}")
+
+        # sql → data_io: bound parameters through the SDK — the value
+        # travels in rendered.params, never in the SQL text, and
+        # execute_query hands both to the connector.
+        daily = render_template(
+            "daily_events",
+            connector.db_type,
+            {"table": "events", "since": "2026-01-01"},
+            search_paths=[Path(__file__).parent / "templates"],
+        )
+        daily_rows = execute_query(connector, daily.sql, daily.params)
+        print(f"[data_io]    bound params {daily.params}: {daily_rows}")
+        if daily_rows != [("signup", 2), ("login", 1)]:
+            raise SystemExit(f"unexpected daily events: {daily_rows}")
 
         # validation: one rule — row count against a threshold.
         rule_result = RowCountRule(table="events", min_rows=1).evaluate(connector)

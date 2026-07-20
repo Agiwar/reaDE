@@ -1,8 +1,6 @@
 """Volume data quality dimension."""
 
-from typing import Any
-
-from reade.core.base.connector import ConnectionBase
+from reade.core.interfaces.connector import ConnectionInterface
 from reade.dq.models import DqResult
 from reade.validation import RowCountRule
 
@@ -23,11 +21,13 @@ class VolumeDimension:
         """
         self._rule = RowCountRule(table=table, min_rows=min_rows)
 
-    def assess(self, connector: ConnectionBase[Any]) -> DqResult:
+    def assess(self, connector: ConnectionInterface) -> DqResult:
         """Assess the dimension against a connected database.
 
         Args:
-            connector: A connected database connector.
+            connector: A connected database connector — any
+                ``ConnectionInterface`` implementation, protocol-only
+                connectors included.
 
         Returns:
             The aggregated outcome; failed checks are results, not

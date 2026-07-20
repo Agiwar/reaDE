@@ -158,14 +158,23 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         """
         return self._connection is not None
 
-    def execute(self, sql: str) -> list[tuple[Any, ...]]:
+    def execute(
+        self, sql: str, params: dict[str, Any] | None = None
+    ) -> list[tuple[Any, ...]]:
         """Execute a SQL statement and return all result rows, materialized.
 
         Statements without a result set (DDL, INSERT) return an empty
-        list.
+        list. Falsy ``params`` are normalized to no-parameters before
+        the driver call, per the ``ConnectionInterface`` contract —
+        psycopg %-formats the statement whenever parameters are present,
+        which would corrupt a literal ``%``.
 
         Args:
-            sql: The SQL statement to execute.
+            sql: The SQL statement to execute, with pyformat
+                (``%(key)s``) placeholders for any bound parameters.
+            params: Values for the statement's placeholders, keyed by
+                placeholder name. ``None`` or ``{}`` mean the statement
+                binds nothing.
 
         Returns:
             All result rows as tuples.
@@ -175,15 +184,16 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
             DbError: If the driver fails to execute the statement or
                 fetch its results.
         """
+        if not params:
+            params = None
         try:
             with self.connection.cursor() as cursor:
                 # psycopg types queries as LiteralString (PEP 675) to
                 # steer callers toward static SQL; this seam's frozen
-                # contract takes runtime str — parameter safety is
-                # Phase 2 scope. The cast bridges checkers that enforce
-                # the literal-only signature (pyright); mypy accepts the
-                # call either way.
-                cursor.execute(cast("Any", sql))
+                # contract takes runtime str. The cast bridges checkers
+                # that enforce the literal-only signature (pyright);
+                # mypy accepts the call either way.
+                cursor.execute(cast("Any", sql), params)
                 # Fetching after a statement with no result set raises in
                 # psycopg (unlike sqlite3); description is the seam-safe
                 # signal that rows exist.

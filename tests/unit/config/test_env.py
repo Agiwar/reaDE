@@ -1,54 +1,62 @@
 """Unit tests for merge_env_overrides.
 
 Every test injects a plain dict as the environment — the function is
-pure and injectable by design, so no monkeypatching is needed.
+pure and injectable by design, so no monkeypatching is needed except
+where the call-time default itself is under test. ``environ`` is
+keyword-only (the 2.2 fourth contract break); every call here uses the
+keyword form.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
+
+import pytest
 
 from reade.config import merge_env_overrides
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TestMergeEnvOverrides:
     def test_env_overrides_file_value(self) -> None:
         data: dict[str, Any] = {"database": "local.db"}
 
-        result = merge_env_overrides(data, {"READE__DATABASE": "prod.db"})
+        result = merge_env_overrides(data, environ={"READE__DATABASE": "prod.db"})
 
         assert result == {"database": "prod.db"}
 
     def test_nested_sections_via_double_underscore(self) -> None:
         data: dict[str, Any] = {"db": {"host": "localhost", "port": 5432}}
 
-        result = merge_env_overrides(data, {"READE__DB__HOST": "db.internal"})
+        result = merge_env_overrides(data, environ={"READE__DB__HOST": "db.internal"})
 
         assert result == {"db": {"host": "db.internal", "port": 5432}}
 
     def test_single_underscores_stay_inside_key_names(self) -> None:
         data: dict[str, Any] = {"db": {"max_retries": 3}}
 
-        result = merge_env_overrides(data, {"READE__DB__MAX_RETRIES": "5"})
+        result = merge_env_overrides(data, environ={"READE__DB__MAX_RETRIES": "5"})
 
         assert result == {"db": {"max_retries": "5"}}
 
     def test_existing_keys_match_case_insensitively(self) -> None:
         data: dict[str, Any] = {"Database": "local.db"}
 
-        result = merge_env_overrides(data, {"READE__DATABASE": "prod.db"})
+        result = merge_env_overrides(data, environ={"READE__DATABASE": "prod.db"})
 
         assert result == {"Database": "prod.db"}
 
     def test_values_inserted_as_raw_strings_without_coercion(self) -> None:
         data: dict[str, Any] = {"port": 5432}
 
-        result = merge_env_overrides(data, {"READE__PORT": "8080"})
+        result = merge_env_overrides(data, environ={"READE__PORT": "8080"})
 
         assert result["port"] == "8080"
 
     def test_unmatched_key_inserted_lowercased(self) -> None:
         data: dict[str, Any] = {"database": "local.db"}
 
-        result = merge_env_overrides(data, {"READE__TIMEOUT": "30"})
+        result = merge_env_overrides(data, environ={"READE__TIMEOUT": "30"})
 
         assert result == {"database": "local.db", "timeout": "30"}
 
@@ -56,14 +64,14 @@ class TestMergeEnvOverrides:
         data: dict[str, Any] = {"database": "local.db"}
         environ = {"DATABASE": "a", "READE_DATABASE": "b", "XREADE__DATABASE": "c"}
 
-        result = merge_env_overrides(data, environ)
+        result = merge_env_overrides(data, environ=environ)
 
         assert result == {"database": "local.db"}
 
     def test_input_data_not_mutated(self) -> None:
         data: dict[str, Any] = {"db": {"host": "localhost"}}
 
-        result = merge_env_overrides(data, {"READE__DB__HOST": "other"})
+        result = merge_env_overrides(data, environ={"READE__DB__HOST": "other"})
 
         assert data == {"db": {"host": "localhost"}}
         assert result is not data
@@ -71,7 +79,7 @@ class TestMergeEnvOverrides:
     def test_empty_environ_returns_equal_copy(self) -> None:
         data: dict[str, Any] = {"database": "local.db"}
 
-        result = merge_env_overrides(data, {})
+        result = merge_env_overrides(data, environ={})
 
         assert result == data
         assert result is not data
@@ -79,7 +87,7 @@ class TestMergeEnvOverrides:
     def test_non_mapping_intermediate_replaced_by_override(self) -> None:
         data: dict[str, Any] = {"db": "sqlite"}
 
-        result = merge_env_overrides(data, {"READE__DB__HOST": "db.internal"})
+        result = merge_env_overrides(data, environ={"READE__DB__HOST": "db.internal"})
 
         assert result == {"db": {"host": "db.internal"}}
 
@@ -88,9 +96,30 @@ class TestMergeEnvOverrides:
         # must make the outcome deterministic with the deeper path winning.
         environ = {"READE__DB__HOST": "db.internal", "READE__DB": "scalar"}
 
-        result = merge_env_overrides({}, environ)
+        result = merge_env_overrides({}, environ=environ)
 
         assert result == {"db": {"host": "db.internal"}}
+
+
+class TestCallTimeSentinel:
+    """The 2.2 fourth break: environ=None reads os.environ at call time."""
+
+    def test_environ_defaults_to_process_environment_at_call_time(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("READE__DATABASE", "prod.db")
+
+        result = merge_env_overrides({"database": "local.db"})
+
+        assert result == {"database": "prod.db"}
+
+    def test_environ_is_keyword_only(self) -> None:
+        # cast keeps the deliberately wrong call shape out of mypy's view
+        # in both the red and green phases.
+        positional_call = cast("Callable[..., dict[str, Any]]", merge_env_overrides)
+
+        with pytest.raises(TypeError):
+            positional_call({"database": "local.db"}, {"READE__DATABASE": "x"})
 
 
 class TestScope:
@@ -98,7 +127,7 @@ class TestScope:
         data: dict[str, Any] = {"host": "localhost"}
 
         result = merge_env_overrides(
-            data, {"READE__POSTGRES__HOST": "db.internal"}, scope="POSTGRES"
+            data, environ={"READE__POSTGRES__HOST": "db.internal"}, scope="POSTGRES"
         )
 
         assert result == {"host": "db.internal"}
@@ -111,7 +140,7 @@ class TestScope:
             "READE__POSTGRES": "no-trailing-segment",
         }
 
-        result = merge_env_overrides(data, environ, scope="POSTGRES")
+        result = merge_env_overrides(data, environ=environ, scope="POSTGRES")
 
         assert result == data
         assert result is not data
@@ -120,7 +149,7 @@ class TestScope:
         data: dict[str, Any] = {"pool": {"size": 5}}
 
         result = merge_env_overrides(
-            data, {"READE__POSTGRES__POOL__SIZE": "10"}, scope="POSTGRES"
+            data, environ={"READE__POSTGRES__POOL__SIZE": "10"}, scope="POSTGRES"
         )
 
         assert result == {"pool": {"size": "10"}}
@@ -129,7 +158,7 @@ class TestScope:
         data: dict[str, Any] = {"host": "localhost"}
 
         result = merge_env_overrides(
-            data, {"READE__postgres__HOST": "db.internal"}, scope="POSTGRES"
+            data, environ={"READE__postgres__HOST": "db.internal"}, scope="POSTGRES"
         )
 
         assert result == {"host": "localhost"}
@@ -141,7 +170,7 @@ class TestScope:
         data: dict[str, Any] = {"host": "localhost"}
 
         result = merge_env_overrides(
-            data, {"READE__POSTGRES__": "value"}, scope="POSTGRES"
+            data, environ={"READE__POSTGRES__": "value"}, scope="POSTGRES"
         )
 
         assert result == {"host": "localhost"}
@@ -149,6 +178,8 @@ class TestScope:
     def test_none_scope_keeps_unscoped_behavior(self) -> None:
         data: dict[str, Any] = {"database": "local.db"}
 
-        result = merge_env_overrides(data, {"READE__DATABASE": "prod.db"}, scope=None)
+        result = merge_env_overrides(
+            data, environ={"READE__DATABASE": "prod.db"}, scope=None
+        )
 
         assert result == {"database": "prod.db"}

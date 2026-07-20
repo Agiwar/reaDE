@@ -11,8 +11,8 @@ _DELIMITER = "__"
 
 def merge_env_overrides(
     data: dict[str, Any],
-    environ: Mapping[str, str] = os.environ,
     *,
+    environ: Mapping[str, str] | None = None,
     scope: str | None = None,
 ) -> dict[str, Any]:
     """Merge ``READE__``-prefixed environment variables into config data.
@@ -48,14 +48,18 @@ def merge_env_overrides(
 
     Args:
         data: Parsed configuration data.
-        environ: Environment mapping; injectable for tests. Defaults to
-            ``os.environ``.
+        environ: Environment mapping; injectable for tests. ``None``
+            (the default) reads ``os.environ`` at call time. Pass ``{}``
+            to disable overrides, or a filtered mapping to substitute
+            the process environment.
         scope: Namespace segment restricting which variables apply;
             ``None`` (the default) applies every ``READE__*`` variable.
 
     Returns:
         A new dictionary with the overrides applied.
     """
+    if environ is None:
+        environ = os.environ
     if scope is not None:
         namespace = f"{_PREFIX}{scope}{_DELIMITER}"
         environ = {
