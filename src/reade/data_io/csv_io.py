@@ -28,7 +28,9 @@ def read_csv(path: str | Path) -> Iterator[dict[str, str]]:
     that silently pads or truncates would misreport the data. Entirely
     blank lines are skipped (the ``csv.DictReader`` precedent: a blank
     line is not a row). Closing a partially consumed iterator releases
-    the file.
+    the file; an iterator that is never advanced holds the file open
+    until it is garbage-collected (closing an unstarted generator
+    discards its frame without running the cleanup).
 
     Args:
         path: Path to the CSV file. Read as UTF-8, comma-delimited,
