@@ -201,6 +201,8 @@
     }
   },
   "reade.data_io.execute_query": "(connector: reade.core.interfaces.connector.ConnectionInterface, sql: str, params: dict[str, typing.Any] | None = None) -> list[tuple[typing.Any, ...]]",
+  "reade.data_io.read_csv": "(path: str | pathlib.Path) -> collections.abc.Iterator[dict[str, str]]",
+  "reade.data_io.write_csv": "(path: str | pathlib.Path, rows: collections.abc.Iterable[collections.abc.Mapping[str, typing.Any]]) -> None",
   "reade.db.MysqlConnector": {
     "annotations": {
       "db_type": "typing.ClassVar[reade.core.enums.db_type.DbType]"
