@@ -296,8 +296,10 @@ Adds no v0.2.0 feature scope.
   evaluation failures raise `RuleError`; `DelayRule` on an empty
   table raises, asserted) + `DelayRule` asserted cross-backend
   (SQLite locally, both servers dockerized — where timestamp values
-  arrive as `datetime`, not `str`) + the acceptance example runs red
-  before the contract branch and green at close.
+  arrive as `datetime`, not `str`) + hostile identifiers raise
+  through both new packaged templates, asserted per dialect + the
+  acceptance example runs red before the contract branch and green
+  at close.
 
 **Sprint 3.2 — dq**
 - Dimensions: volume, freshness, completeness (composed from validation rules)
