@@ -13,11 +13,13 @@ class RuleResult:
     Attributes:
         rule: Name of the rule that produced this result.
         passed: Whether the data satisfied the rule.
-        observed: The value the rule measured.
+        observed: The value the rule measured — a count, or a duration
+            in seconds. Count rules report exact ``int`` values, valid
+            wherever ``float`` is expected (PEP 484 numeric tower).
         threshold: The bound the observed value was compared against.
     """
 
     rule: str
     passed: bool
-    observed: int
-    threshold: int
+    observed: float
+    threshold: float
