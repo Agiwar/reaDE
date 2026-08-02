@@ -253,13 +253,62 @@ Adds no v0.2.0 feature scope.
 ### Phase 3 — validation + dq → `v0.3.0`
 
 **Sprint 3.1 — validation**
-- Rules: count, delay, schema, custom-rule plug-in point
-- Note: the parked rule set (`agg`, `null`) diverges from this list
-  (`schema`); reconcile at the re-land design review
+- Rule set (reconciled at the 3.1 kickoff, resolving the drafted
+  list's own divergence note): the shipped count rule is joined by
+  `DelayRule` and `NullCountRule`, plus the custom-rule plug-in
+  point. The schema rule is deferred — no Sprint 3.2 dimension
+  consumes it (volume/freshness/completeness compose the
+  count/delay/null-count rules), and its per-dialect introspection is
+  the sprint's heaviest surface; it returns with a consumer (3.2 or
+  the Phase 4 walk). Of the parked taxonomy, `null` is adopted;
+  `agg` stays out (no plan line, no dimension consumer).
+- Plug-in point: a `Rule` protocol exported from `reade.validation` —
+  not `core.interfaces`: its return type `RuleResult` is validation
+  vocabulary, and core imports from no feature module — with exactly
+  one member, `evaluate(self, connector: ConnectionInterface) ->
+  RuleResult`. Minimal membership is the reversible choice: protocol
+  members are snapshot-pinned, so a member added later is additive
+  while one removed is a break.
+- `DelayRule` (data-freshness delay, named for what it measures):
+  client-side measurement — one dialect-neutral max-timestamp
+  template; the delay is computed in Python against the client clock
+  in UTC. Naive database timestamps are assumed UTC; aware values are
+  normalized to UTC — the docstring states the stance as contract. An
+  empty table raises `RuleError` (unanswerable is not stale). "Now"
+  is injectable as a constructor keyword for testability.
+- `NullCountRule`: null count in a column against a threshold — named
+  for what it measures, mirroring `RowCountRule`.
+- Breaking change (pre-registered in PR #5's design notes; the
+  itemized design-review note and snapshot regen ride the
+  implementing PR): `RuleResult.observed` and `RuleResult.threshold`
+  retype from `int` to `float`. Per PEP 484's numeric tower, `int`
+  stays valid at every call site and runtime values pass through
+  untouched — count rules keep reporting exact ints; the annotation
+  now covers durations honestly.
+- DoD: 1.1 baseline (≥90% coverage gate on the module in CI, README
+  section, example) + `make check-all` green at every completion
+  claim (the standing completion contract) + the RuleResult break's
+  itemized design-review note with the public-API snapshot updated in
+  the same PR + contract tests proving the plug-in point (a static
+  conformance proof per shipped rule and a protocol-only custom rule
+  evaluated through the public seam) + results-not-raises asserted
+  per rule (a failed check is `passed=False`, never a raise;
+  evaluation failures raise `RuleError`; `DelayRule` on an empty
+  table raises, asserted) + `DelayRule` asserted cross-backend
+  (SQLite locally, both servers dockerized — where timestamp values
+  arrive as `datetime`, not `str`) + hostile identifiers raise
+  through both new packaged templates, asserted per dialect + the
+  acceptance example runs red before the contract branch and green
+  at close.
 
 **Sprint 3.2 — dq**
 - Dimensions: volume, freshness, completeness (composed from validation rules)
 - One opinionated golden path: `reade.dq.check(table, dims=[...])`
+- Note (added at the 3.1 kickoff): whether dimensions catch and
+  report `RuleError` from composed rules or let it propagate is
+  reserved for the 3.2 kickoff — named now so 3.1 cannot resolve it
+  implicitly (`DelayRule` raises on an empty table; a dimension must
+  decide what that means for its verdict).
 
 **Gate → tag `v0.3.0`.**
 
