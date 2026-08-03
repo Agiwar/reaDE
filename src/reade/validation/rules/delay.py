@@ -20,7 +20,8 @@ class DelayRule:
     Timezone stance (contract): naive timestamps — database values and
     a caller-supplied ``now`` alike — are assumed UTC; aware values are
     normalized to UTC. Future timestamps yield a negative delay and
-    pass.
+    pass. ``date`` values measure from midnight UTC — a today-valued
+    column reads up to a day old, erring toward staleness.
     """
 
     def __init__(
