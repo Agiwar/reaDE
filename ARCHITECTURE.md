@@ -35,7 +35,7 @@ The Foundation exists to serve the use cases above it. Features depend on
 | `db` | Connection lifecycle, health check, pooling, retries |
 | `sql` | Jinja2 template → SQL, with parameter safety |
 | `data_io` | Execute query, read / write results |
-| `validation` | Rules: count, delay, schema, custom plug-ins |
+| `validation` | Rules: count, delay, null count; custom-rule plug-in point (Protocol) |
 | `dq` | Data-quality dimensions (volume, freshness, completeness) composed from validation rules |
 | `utils` | Generic helpers; no business logic |
 

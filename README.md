@@ -93,7 +93,7 @@ from reade.dq import VolumeDimension
 | `db/` | ✅ Hardened (1.2) | SQLite / PostgreSQL / MySQL; lifecycle, health check, connect retry; dockerized integration tests |
 | `sql/` | ✅ Hardened (2.1) | `RenderedQuery` render contract; `bind`/`ident` filters; discovery convention; injection tests |
 | `data_io/` | ✅ Hardened (2.2) | Bound-param execution through `execute_query`; streaming CSV reader/writer |
-| `validation/` | ✅ Thin slice | Row-count rule; more rules in Phase 3 |
+| `validation/` | ✅ Hardened (3.1) | Count / delay / null-count rules; `Rule` plug-in protocol |
 | `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
 
 Earlier prototype implementations are being re-landed sprint by sprint.
@@ -287,6 +287,54 @@ for row in read_csv("daily_events.csv"):  # streams; list(...) materializes
 See [`examples/end_to_end.py`](examples/end_to_end.py) — bound-param
 execution and a CSV round trip inside the full chain.
 
+## Validation
+
+Rules check data against expectations through any connector, and a
+failed check is a result, never a raise: every rule returns
+`RuleResult(rule, passed, observed, threshold)`, so the pipeline
+decides what failure means. Raising is reserved for evaluation
+failures — the rule could not measure at all (`RuleError`).
+
+```python
+from reade.validation import DelayRule, NullCountRule, RowCountRule
+
+RowCountRule(table="events", min_rows=1).evaluate(connector)
+DelayRule(
+    table="events", column="created_at", max_delay_seconds=3600
+).evaluate(connector)
+NullCountRule(table="events", column="event_name").evaluate(connector)
+```
+
+- **`RowCountRule`** — the table holds at least `min_rows` rows. An
+  empty table reports `observed=0` (and fails the default threshold).
+- **`DelayRule`** — the newest value in a timestamp column is at most
+  `max_delay_seconds` old. Measurement is client-side against the
+  client clock in UTC: naive timestamps are assumed UTC, aware values
+  are normalized, `date` values measure from midnight UTC (erring
+  toward staleness), and future timestamps pass. An empty table
+  raises `RuleError` — a freshness check with nothing to measure is
+  unanswerable, not stale. `now=` takes a fixed instant for
+  deterministic tests. MySQL `TIMESTAMP` columns convert through the
+  session time zone on read, shifting the measured delay by the
+  session's offset — run UTC sessions, or use `DATETIME`, which is
+  returned as stored.
+- **`NullCountRule`** — a column holds at most `max_nulls` NULLs
+  (default 0: fully populated). Only the named column counts, and an
+  empty table reports `observed=0` — zero rows contain zero NULLs;
+  volume is `RowCountRule`'s job.
+- **Custom rules** — anything with an
+  `evaluate(connector) -> RuleResult` method satisfies the `Rule`
+  protocol structurally; nothing inherits from reaDE, and one seam
+  runs built-in and custom rules alike. Keep the parameter name
+  `connector` — keyword calls are legal for every conforming rule.
+  Rule table and column names pass the `ident` allowlist before
+  reaching SQL: hostile identifiers raise and never reach the
+  database.
+
+See [`examples/validation_rules.py`](examples/validation_rules.py) —
+the three shipped rules plus a custom protocol-only rule evaluated
+through one seam, and a failing check reporting instead of raising.
+
 ## MVP Scope
 
 **Core database support** — the base install stays light; server drivers
@@ -318,7 +366,7 @@ are opt-in extras:
 | `db/` | Connection lifecycle, health check |
 | `sql/` | Render Jinja2 templates → `RenderedQuery` (SQL + bound params) |
 | `data_io/` | Execute SQL, external I/O (incl. CSV readers) |
-| `validation/` | Schema, type, and rule validation |
+| `validation/` | Row-count, delay, and null-count rules; custom-rule plug-in point |
 | `dq/` | Data quality dimension aggregation |
 
 **Data Flow:**

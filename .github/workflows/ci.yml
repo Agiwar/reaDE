@@ -85,6 +85,9 @@ jobs:
       - name: Render-contract example
         run: uv run python examples/sql_render.py
 
+      - name: Validation-rules example
+        run: uv run python examples/validation_rules.py
+
       - name: Config module coverage gate (>=90%)
         run: uv run pytest --cov=reade.config --cov-fail-under=90 -q
 
@@ -96,6 +99,9 @@ jobs:
 
       - name: Data_io module coverage gate (>=90%)
         run: uv run pytest --cov=reade.data_io --cov-fail-under=90 -q
+
+      - name: Validation module coverage gate (>=90%)
+        run: uv run pytest --cov=reade.validation --cov-fail-under=90 -q
 
       - name: Global coverage gate (>=90%)
         run: uv run pytest --cov=src --cov-fail-under=90 -q
