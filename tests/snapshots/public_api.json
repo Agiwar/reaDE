@@ -301,6 +301,15 @@
     }
   },
   "reade.sql.render_template": "(template_name: str, dialect: reade.core.enums.db_type.DbType, context: collections.abc.Mapping[str, typing.Any] | None = None, /, *, search_paths: collections.abc.Sequence[str | pathlib.Path] | None = None) -> reade.sql.models.RenderedQuery",
+  "reade.validation.DelayRule": {
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__init__": "(self, table: str, column: str, max_delay_seconds: float, *, now: datetime.datetime | None = None) -> None",
+      "evaluate": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.validation.models.RuleResult"
+    }
+  },
   "reade.validation.RowCountRule": {
     "bases": [
       "builtins.object"

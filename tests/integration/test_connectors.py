@@ -20,14 +20,16 @@ of record for the dockerized DoD item.
 """
 
 import os
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from reade.core.errors import DbError
+from reade.core.errors import DbError, RuleError
 from reade.data_io import execute_query
 from reade.db import MysqlConnector, PostgresConnector
 from reade.sql import render_template
+from reade.validation import DelayRule
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -231,6 +233,62 @@ class TestBoundParams:
         finally:
             with make_connector() as cleanup:
                 cleanup.execute("DROP TABLE IF EXISTS reade_it_params")
+
+
+class TestDelayRule:
+    """The 3.1 delay rule against real drivers on the wire.
+
+    Timestamp columns arrive as ``datetime`` objects from both server
+    drivers, not the strings SQLite returns — the normalizer leg the
+    unit suite reaches only with canned fakes.
+    """
+
+    def test_fresh_timestamp_passes_via_driver_datetime(
+        self, connector: "ConnectionBase[Any]"
+    ) -> None:
+        # The timestamp is inserted from the client clock as naive UTC,
+        # so the measured delay is independent of the server clock.
+        with connector:
+            connector.execute("DROP TABLE IF EXISTS reade_it_delay")
+            try:
+                connector.execute("CREATE TABLE reade_it_delay (created_at TIMESTAMP)")
+                connector.execute(
+                    "INSERT INTO reade_it_delay VALUES (%(ts)s)",
+                    {"ts": datetime.now(UTC).replace(tzinfo=None)},
+                )
+                value = connector.execute("SELECT MAX(created_at) FROM reade_it_delay")[
+                    0
+                ][0]
+                assert isinstance(value, datetime)  # the wire divergence
+
+                result = DelayRule(
+                    table="reade_it_delay",
+                    column="created_at",
+                    max_delay_seconds=3600,
+                ).evaluate(connector)
+
+                assert result.passed
+                assert result.rule == "delay"
+            finally:
+                connector.execute("DROP TABLE IF EXISTS reade_it_delay")
+
+    def test_empty_table_raises_rule_error(
+        self, connector: "ConnectionBase[Any]"
+    ) -> None:
+        with connector:
+            connector.execute("DROP TABLE IF EXISTS reade_it_delay_empty")
+            try:
+                connector.execute(
+                    "CREATE TABLE reade_it_delay_empty (created_at TIMESTAMP)"
+                )
+                with pytest.raises(RuleError):
+                    DelayRule(
+                        table="reade_it_delay_empty",
+                        column="created_at",
+                        max_delay_seconds=3600,
+                    ).evaluate(connector)
+            finally:
+                connector.execute("DROP TABLE IF EXISTS reade_it_delay_empty")
 
 
 class TestConnectFailure:
