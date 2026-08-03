@@ -310,12 +310,21 @@
       "evaluate": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.validation.models.RuleResult"
     }
   },
+  "reade.validation.Rule": {
+    "bases": [
+      "typing.Protocol"
+    ],
+    "members": {
+      "__init__": "(self, *args, **kwargs)",
+      "evaluate": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.validation.models.RuleResult"
+    }
+  },
   "reade.validation.RuleResult": {
     "annotations": {
-      "observed": "<class 'int'>",
+      "observed": "<class 'float'>",
       "passed": "<class 'bool'>",
       "rule": "<class 'str'>",
-      "threshold": "<class 'int'>"
+      "threshold": "<class 'float'>"
     },
     "bases": [
       "builtins.object"
@@ -324,7 +333,7 @@
       "__delattr__": "(self, name)",
       "__eq__": "(self, other)",
       "__hash__": "(self)",
-      "__init__": "(self, rule: str, passed: bool, observed: int, threshold: int) -> None",
+      "__init__": "(self, rule: str, passed: bool, observed: float, threshold: float) -> None",
       "__match_args__": "('rule', 'passed', 'observed', 'threshold')",
       "__repr__": "(self)",
       "__setattr__": "(self, name, value)"
