@@ -18,7 +18,7 @@ from reade.data_io import execute_query, read_csv, write_csv
 from reade.db import SqliteConnector
 from reade.dq import VolumeDimension
 from reade.sql import render_template
-from reade.validation import RowCountRule
+from reade.validation import NullCountRule, RowCountRule
 
 
 def main() -> None:
@@ -68,11 +68,18 @@ def main() -> None:
         if daily_rows != [("signup", 2), ("login", 1)]:
             raise SystemExit(f"unexpected daily events: {daily_rows}")
 
-        # validation: one rule — row count against a threshold.
+        # validation: rules — row count and null count against thresholds.
         rule_result = RowCountRule(table="events", min_rows=1).evaluate(connector)
         print(
             f"[validation] rule={rule_result.rule} passed={rule_result.passed} "
             f"observed={rule_result.observed} threshold={rule_result.threshold}"
+        )
+        null_result = NullCountRule(table="events", column="event_name").evaluate(
+            connector
+        )
+        print(
+            f"[validation] rule={null_result.rule} passed={null_result.passed} "
+            f"observed={null_result.observed} threshold={null_result.threshold}"
         )
 
         # dq: the volume dimension, composed from the validation rule.
