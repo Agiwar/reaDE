@@ -254,6 +254,15 @@
       "ping": "(self) -> bool"
     }
   },
+  "reade.dq.Dimension": {
+    "bases": [
+      "typing.Protocol"
+    ],
+    "members": {
+      "__init__": "(self, *args, **kwargs)",
+      "assess": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.dq.models.DqResult"
+    }
+  },
   "reade.dq.DqResult": {
     "annotations": {
       "dimension": "<class 'str'>",
