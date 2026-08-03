@@ -260,7 +260,10 @@ Adds no v0.2.0 feature scope.
   consumes it (volume/freshness/completeness compose the
   count/delay/null-count rules), and its per-dialect introspection is
   the sprint's heaviest surface; it returns with a consumer (3.2 or
-  the Phase 4 walk). Of the parked taxonomy, `null` is adopted;
+  the Phase 4 walk). [2026-08-03, 3.2 kickoff: weighed per the
+  condition — no 3.2 dimension consumes it; consumer still absent,
+  so it stays deferred to the Phase 4 walk.] Of the parked taxonomy,
+  `null` is adopted;
   `agg` stays out (no plan line, no dimension consumer).
 - Plug-in point: a `Rule` protocol exported from `reade.validation` —
   not `core.interfaces`: its return type `RuleResult` is validation
@@ -302,13 +305,62 @@ Adds no v0.2.0 feature scope.
   at close.
 
 **Sprint 3.2 — dq**
-- Dimensions: volume, freshness, completeness (composed from validation rules)
-- One opinionated golden path: `reade.dq.check(table, dims=[...])`
-- Note (added at the 3.1 kickoff): whether dimensions catch and
-  report `RuleError` from composed rules or let it propagate is
-  reserved for the 3.2 kickoff — named now so 3.1 cannot resolve it
-  implicitly (`DelayRule` raises on an empty table; a dimension must
-  decide what that means for its verdict).
+- Dimensions (composed from the three rules shipped in 3.1 — no new
+  validation rules): volume (shipped thin in Phase 0; its composition
+  retypes to the `Rule` protocol internally, no public change),
+  freshness over the delay rule, completeness over the null-count
+  rule. `CompletenessDimension` takes `columns: Sequence[str]` — one
+  null-count rule per column under a uniform threshold — because
+  completeness is a plural question: one dimension answers it and
+  `DqResult.rule_results` aggregates a genuinely multi-rule outcome;
+  per-column tuning is another instance. Choosing the plural
+  constructor now avoids a breaking change later.
+- Plug-in point one layer up (added at the 3.2 kickoff, closing a
+  gap the kickoff review caught): a `Dimension` protocol exported
+  from `reade.dq` — `assess(self, connector: ConnectionInterface) ->
+  DqResult`, assess-only membership, the validation `Rule` protocol's
+  design applied at the dq seam (dq-local because `DqResult` is dq
+  vocabulary; minimal membership is the reversible choice). Shipped
+  dimensions compose their rules internally — the opinionated pairing
+  is the value, so there is no rule-injection constructor; extension
+  happens by writing a custom dimension, and `check` types its
+  dimensions against the protocol.
+- One opinionated golden path (signature amended at the 3.2 kickoff):
+  `reade.dq.check(connector, dims=[...]) -> DqReport` — constructed
+  dimension instances through the seam, consistent with every shipped
+  seam. The drafted `table` parameter is dropped as redundant: each
+  dimension carries its own table, and instance lists give
+  cross-table reports for free.
+- `RuleError` semantics (resolving the note reserved at the 3.1
+  kickoff): SPLIT across the layers. Dimensions propagate
+  `RuleError` — an unanswerable measurement is not a failed check;
+  reporting it as `passed=False` would lie at the layer consumers
+  filter on. `check` catches `RuleError` per dimension and reports
+  errored vs failed distinctly in a new `DqReport` type: overall
+  `passed` only if every dimension measured and passed; an errored
+  dimension carries its error. Lower-layer errors (`DbError`,
+  `NotConnectedError`) propagate out of `check` — a dead connection
+  aborts the report rather than becoming a per-dimension verdict.
+- Additive only: `Dimension`, `DqReport`, `FreshnessDimension`,
+  `CompletenessDimension`, and `check` join `reade.dq`; the
+  `DqResult` and `VolumeDimension` surfaces are unchanged.
+- DoD: 1.1 baseline (≥90% coverage gate on the module in CI, README
+  section, example) + `make check-all` green at every completion
+  claim (the standing completion contract) + each additive symbol
+  carries an itemized design-review note with the public-API
+  snapshot updated in the same PR, and the `DqResult` /
+  `VolumeDimension` pins stay byte-identical + contract tests prove
+  the plug-in point (a static conformance proof per shipped
+  dimension and a protocol-only custom dimension evaluated through
+  `check`), with each shipped dimension's rule composition proven in
+  its own branch's tests + the split semantic asserted per layer
+  (freshness over an empty table propagates `RuleError`; volume and
+  completeness report results there; `check` distinguishes errored
+  from failed in one report, with overall `passed` asserted in both
+  directions) + declared wire posture: dimensions add composition,
+  not SQL — no new driver divergence to assert, declared in the PRs
+  rather than silently absent + the acceptance example runs red
+  before the contract branch and green at close.
 
 **Gate → tag `v0.3.0`.**
 
