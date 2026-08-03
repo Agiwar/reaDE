@@ -310,6 +310,15 @@
       "evaluate": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.validation.models.RuleResult"
     }
   },
+  "reade.validation.NullCountRule": {
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__init__": "(self, table: str, column: str, max_nulls: int = 0) -> None",
+      "evaluate": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.validation.models.RuleResult"
+    }
+  },
   "reade.validation.RowCountRule": {
     "bases": [
       "builtins.object"

@@ -1,0 +1,3 @@
+SELECT COUNT(*) AS null_count
+FROM {{ table | ident }}
+WHERE {{ column | ident }} IS NULL
