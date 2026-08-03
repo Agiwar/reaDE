@@ -293,7 +293,10 @@ Rules check data against expectations through any connector, and a
 failed check is a result, never a raise: every rule returns
 `RuleResult(rule, passed, observed, threshold)`, so the pipeline
 decides what failure means. Raising is reserved for evaluation
-failures — the rule could not measure at all (`RuleError`).
+failures — the rule could not measure at all (`RuleError`). The
+built-in rules' table and column names pass the `ident` allowlist
+before reaching SQL — hostile identifiers raise; they never reach
+the database.
 
 ```python
 from reade.validation import DelayRule, NullCountRule, RowCountRule
@@ -327,9 +330,9 @@ NullCountRule(table="events", column="event_name").evaluate(connector)
   protocol structurally; nothing inherits from reaDE, and one seam
   runs built-in and custom rules alike. Keep the parameter name
   `connector` — keyword calls are legal for every conforming rule.
-  Rule table and column names pass the `ident` allowlist before
-  reaching SQL: hostile identifiers raise and never reach the
-  database.
+  A custom rule owns its own SQL — route identifiers through
+  `render_template`'s `ident` filter to get the same injection
+  guarantee the built-ins have.
 
 See [`examples/validation_rules.py`](examples/validation_rules.py) —
 the three shipped rules plus a custom protocol-only rule evaluated
