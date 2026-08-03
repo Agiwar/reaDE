@@ -21,11 +21,14 @@ from reade.core.errors import RuleError
 from reade.core.interfaces import ConnectionInterface
 from reade.data_io import execute_query
 from reade.db import SqliteConnector
-from reade.validation import RowCountRule, Rule, RuleResult
+from reade.validation import DelayRule, RowCountRule, Rule, RuleResult
 
-# Static conformance proof: mypy verifies on this assignment that the
-# shipped rule satisfies the protocol.
-_shipped_conformance: Rule = RowCountRule(table="events")
+# Static conformance proofs: mypy verifies on these assignments that
+# every shipped rule satisfies the protocol.
+_count_conformance: Rule = RowCountRule(table="events")
+_delay_conformance: Rule = DelayRule(
+    table="events", column="created_at", max_delay_seconds=3600
+)
 
 
 class MaxIdRule:
