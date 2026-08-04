@@ -282,6 +282,15 @@
       "__setattr__": "(self, name, value)"
     }
   },
+  "reade.dq.FreshnessDimension": {
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__init__": "(self, table: str, column: str, max_delay_seconds: float) -> None",
+      "assess": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.dq.models.DqResult"
+    }
+  },
   "reade.dq.VolumeDimension": {
     "bases": [
       "builtins.object"
