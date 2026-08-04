@@ -2,7 +2,7 @@
 
 from reade.core.interfaces.connector import ConnectionInterface
 from reade.dq.models import DqResult
-from reade.validation import RowCountRule
+from reade.validation import RowCountRule, Rule
 
 
 class VolumeDimension:
@@ -19,7 +19,7 @@ class VolumeDimension:
             table: Name of the table to assess.
             min_rows: Minimum row count required to pass.
         """
-        self._rule = RowCountRule(table=table, min_rows=min_rows)
+        self._rule: Rule = RowCountRule(table=table, min_rows=min_rows)
 
     def assess(self, connector: ConnectionInterface) -> DqResult:
         """Assess the dimension against a connected database.
