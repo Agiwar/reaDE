@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from reade.core.errors.validation import RuleError
 from reade.validation import RuleResult
 
 
@@ -22,3 +23,25 @@ class DqResult:
     dimension: str
     passed: bool
     rule_results: tuple[RuleResult, ...]
+
+
+@dataclass(frozen=True)
+class DqReport:
+    """Outcome of a data-quality check across dimensions.
+
+    One entry per dimension, in the order given to ``check``: a
+    ``DqResult`` where the dimension measured, or the ``RuleError``
+    that made its measurement unanswerable. Errored entries carry
+    their error and are never represented as failed results — errored
+    and failed stay distinct. The report passes only if every
+    dimension measured and passed.
+
+    Attributes:
+        passed: Whether every dimension measured and passed.
+        entries: Per-dimension outcomes in input order — a
+            ``DqResult`` for each measured dimension, the caught
+            ``RuleError`` for each errored one.
+    """
+
+    passed: bool
+    entries: tuple[DqResult | RuleError, ...]

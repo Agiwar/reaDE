@@ -27,6 +27,7 @@ from reade.dq import (
     DqResult,
     FreshnessDimension,
     VolumeDimension,
+    check,
 )
 from reade.validation import NullCountRule, RowCountRule
 
@@ -163,3 +164,23 @@ class TestDimensionProtocol:
         outcome = dimension.assess(connector=connector)
 
         assert outcome.passed
+
+    def test_protocol_only_dimension_reports_through_check(
+        self, connector: SqliteConnector
+    ) -> None:
+        # The plug-in promise at the golden path: a custom dimension
+        # that inherits nothing from reaDE reports through check next
+        # to a shipped one, in input order.
+        report = check(
+            connector,
+            dims=[
+                PopulatedRowsDimension(table="events", column="event_name"),
+                VolumeDimension(table="events"),
+            ],
+        )
+
+        assert report.passed
+        first = report.entries[0]
+        assert isinstance(first, DqResult)
+        assert first.dimension == "populated_rows"
+        assert len(first.rule_results) == 2
