@@ -272,6 +272,24 @@
       "assess": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.dq.models.DqResult"
     }
   },
+  "reade.dq.DqReport": {
+    "annotations": {
+      "entries": "tuple[reade.dq.models.DqResult | reade.core.errors.validation.RuleError, ...]",
+      "passed": "<class 'bool'>"
+    },
+    "bases": [
+      "builtins.object"
+    ],
+    "members": {
+      "__delattr__": "(self, name)",
+      "__eq__": "(self, other)",
+      "__hash__": "(self)",
+      "__init__": "(self, passed: bool, entries: tuple[reade.dq.models.DqResult | reade.core.errors.validation.RuleError, ...]) -> None",
+      "__match_args__": "('passed', 'entries')",
+      "__repr__": "(self)",
+      "__setattr__": "(self, name, value)"
+    }
+  },
   "reade.dq.DqResult": {
     "annotations": {
       "dimension": "<class 'str'>",
@@ -309,6 +327,7 @@
       "assess": "(self, connector: reade.core.interfaces.connector.ConnectionInterface) -> reade.dq.models.DqResult"
     }
   },
+  "reade.dq.check": "(connector: reade.core.interfaces.connector.ConnectionInterface, dims: collections.abc.Sequence[reade.dq.interfaces.Dimension]) -> reade.dq.models.DqReport",
   "reade.sql.RenderedQuery": {
     "annotations": {
       "params": "dict[str, typing.Any]",
