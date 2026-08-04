@@ -3,8 +3,8 @@
 Sprint 0.2 acceptance script (DoD item 1). Exercises the full dependency
 chain against SQLite using only the public API: load a YAML config, open a
 connection, render SQL templates, execute them (with bound parameters),
-round-trip an aggregate through CSV, evaluate a validation rule, and
-aggregate it into a data-quality dimension.
+round-trip an aggregate through CSV, evaluate validation rules, and
+aggregate dimensions into one data-quality report.
 
 Run with: uv run python examples/end_to_end.py
 """
@@ -16,7 +16,7 @@ from reade.config import ConfigLoaderFactory
 from reade.core.enums import FileType
 from reade.data_io import execute_query, read_csv, write_csv
 from reade.db import SqliteConnector
-from reade.dq import VolumeDimension
+from reade.dq import CompletenessDimension, VolumeDimension, check
 from reade.sql import render_template
 from reade.validation import NullCountRule, RowCountRule
 
@@ -82,9 +82,18 @@ def main() -> None:
             f"observed={null_result.observed} threshold={null_result.threshold}"
         )
 
-        # dq: the volume dimension, composed from the validation rule.
-        dq_result = VolumeDimension(table="events", min_rows=1).assess(connector)
-        print(f"[dq]         dimension={dq_result.dimension} passed={dq_result.passed}")
+        # dq: the golden path — dimensions composed from validation
+        # rules, aggregated into one report through one connection.
+        report = check(
+            connector,
+            dims=[
+                VolumeDimension(table="events", min_rows=1),
+                CompletenessDimension(table="events", columns=["event_name"]),
+            ],
+        )
+        print(
+            f"[dq]         check passed={report.passed} entries={len(report.entries)}"
+        )
 
     # data_io: persist the aggregate as CSV and read it back — dict rows
     # keyed by header, values as raw strings (validation owns coercion).
@@ -102,7 +111,7 @@ def main() -> None:
     ]:
         raise SystemExit(f"unexpected csv round-trip: {readback}")
 
-    if not dq_result.passed:
+    if not report.passed:
         raise SystemExit(1)
     print("end-to-end chain OK")
 

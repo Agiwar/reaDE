@@ -44,7 +44,7 @@ Then, after shipping the pipeline, DQ never happens because:
 reaDE is a Python SDK for the work data engineers already do — connect to a database, render a SQL template, execute it, and check the result — with data quality treated as part of the toolkit, not a separate platform you adopt.
 
 - **Code-native** — pure Python with typed interfaces. Composable like any other library; mypy-strict at the source.
-- **DQ designed in, not bolted on** — counts, freshness, nulls, schema, and custom rules share the same execution path as your queries, so writing a check has the same shape as writing a query.
+- **DQ designed in, not bolted on** — counts, freshness, nulls, and custom rules share the same execution path as your queries, so writing a check has the same shape as writing a query.
 - **Modular** — pick the parts you need (`config/`, `db/`, `sql/`, `data_io/`, `validation/`, `dq/`); each has a small, documented surface.
 - **Stays out of your way** — runs wherever your Python runs. No hosted service, no metadata store, no UI server to operate.
 
@@ -81,7 +81,7 @@ from reade.db import SqliteConnector
 from reade.sql import render_template
 from reade.data_io import execute_query, read_csv, write_csv
 from reade.validation import RowCountRule
-from reade.dq import VolumeDimension
+from reade.dq import CompletenessDimension, VolumeDimension, check
 ```
 
 ### Module Status
@@ -94,7 +94,7 @@ from reade.dq import VolumeDimension
 | `sql/` | ✅ Hardened (2.1) | `RenderedQuery` render contract; `bind`/`ident` filters; discovery convention; injection tests |
 | `data_io/` | ✅ Hardened (2.2) | Bound-param execution through `execute_query`; streaming CSV reader/writer |
 | `validation/` | ✅ Hardened (3.1) | Count / delay / null-count rules; `Rule` plug-in protocol |
-| `dq/` | ✅ Thin slice | Volume dimension; more dims in Phase 3 |
+| `dq/` | ✅ Hardened (3.2) | Volume / freshness / completeness dimensions; `Dimension` plug-in protocol; `check` golden path |
 
 Earlier prototype implementations are being re-landed sprint by sprint.
 
@@ -338,6 +338,77 @@ See [`examples/validation_rules.py`](examples/validation_rules.py) —
 the three shipped rules plus a custom protocol-only rule evaluated
 through one seam, and a failing check reporting instead of raising.
 
+## Data Quality
+
+Dimensions compose validation rules into verdicts, and `check` runs
+them as one report. The split semantic is the contract: dimensions
+propagate `RuleError` — an unanswerable measurement is not a failed
+check — while `check` catches it per dimension and reports errored
+distinct from failed, without aborting the report.
+
+```python
+from reade.dq import (
+    CompletenessDimension,
+    FreshnessDimension,
+    VolumeDimension,
+    check,
+)
+
+report = check(
+    connector,
+    dims=[
+        VolumeDimension(table="events", min_rows=1),
+        FreshnessDimension(
+            table="events", column="created_at", max_delay_seconds=3600
+        ),
+        CompletenessDimension(table="events", columns=["event_name", "city"]),
+    ],
+)
+report.passed   # True only if every dimension measured and passed
+report.entries  # one entry per dimension, in dims order
+```
+
+- **`VolumeDimension`** — the table holds at least `min_rows` rows,
+  over the row-count rule.
+- **`FreshnessDimension`** — the newest value in a timestamp column
+  is at most `max_delay_seconds` old, over the delay rule. Over an
+  empty table (or all-NULL column) the measurement is unanswerable:
+  the dimension raises `RuleError` instead of inventing a verdict —
+  `check` turns that into an errored entry. The delay rule's `now=`
+  keyword stays a rule-layer affordance; dimensions measure against
+  the client clock.
+- **`CompletenessDimension`** — every named column holds at most
+  `max_nulls` NULLs (default 0: fully populated), one null-count
+  rule per column under the one uniform threshold; outcomes are
+  reported in the constructor's column order, and the dimension
+  passes only if every column does. An empty table passes — zero
+  rows contain zero NULLs; emptiness is the volume dimension's
+  finding. Degenerate `columns` — an empty list, or a bare string,
+  which would be read as per-character column names — raise
+  `DqError` at construction: a dimension that measures nothing
+  cannot report.
+- **`check(connector, dims=[...])`** returns a `DqReport`:
+  `entries` holds, per dimension in input order, either its
+  `DqResult` or the `RuleError` that made its measurement
+  unanswerable — errored and failed are different types, so a
+  report cannot misread one as the other, and `passed` is `True`
+  only if every dimension measured and passed. Only `RuleError` is
+  caught: a hostile identifier (`SqlError`) is a caller bug, and a
+  connection failure (`DbError`, `NotConnectedError`) aborts the
+  report — both propagate unchanged. Empty `dims` raise `DqError` —
+  a report that measures nothing cannot pass.
+- **Custom dimensions** — anything with an
+  `assess(connector) -> DqResult` method satisfies the `Dimension`
+  protocol structurally; nothing inherits from reaDE, and `check`
+  runs built-in and custom dimensions alike. Keep the parameter
+  name `connector` — keyword calls are legal for every conforming
+  dimension. A custom dimension composes whatever rules it needs
+  through the same seam the shipped dimensions use.
+
+See [`examples/dq_dimensions.py`](examples/dq_dimensions.py) — the
+three shipped dimensions plus a custom protocol-only dimension
+through one report, and both halves of the split semantic.
+
 ## MVP Scope
 
 **Core database support** — the base install stays light; server drivers
@@ -391,12 +462,12 @@ src/reade/
 │   ├── errors/     # Exception hierarchy rooted at ReadeError
 │   ├── interfaces/ # Protocol definitions (contracts)
 │   └── models/     # Shared data models (DbMetadata)
-├── config/         # YAML loader + loader factory
-├── db/             # SQLite connector
+├── config/         # YAML / JSON loaders; typed models; env overrides
+├── db/             # SQLite / PostgreSQL / MySQL connectors
 ├── sql/            # Jinja2 template rendering + packaged templates
-├── data_io/        # Query execution
-├── validation/     # Row-count rule
-└── dq/             # Volume dimension
+├── data_io/        # Query execution; CSV reader and writer
+├── validation/     # Count / delay / null-count rules; Rule protocol
+└── dq/             # Dimensions; Dimension protocol; check golden path
 ```
 
 Each feature module is a thin slice that deepens in its hardening sprint —
