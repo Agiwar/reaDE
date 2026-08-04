@@ -44,7 +44,7 @@ Then, after shipping the pipeline, DQ never happens because:
 reaDE is a Python SDK for the work data engineers already do — connect to a database, render a SQL template, execute it, and check the result — with data quality treated as part of the toolkit, not a separate platform you adopt.
 
 - **Code-native** — pure Python with typed interfaces. Composable like any other library; mypy-strict at the source.
-- **DQ designed in, not bolted on** — counts, freshness, nulls, schema, and custom rules share the same execution path as your queries, so writing a check has the same shape as writing a query.
+- **DQ designed in, not bolted on** — counts, freshness, nulls, and custom rules share the same execution path as your queries, so writing a check has the same shape as writing a query.
 - **Modular** — pick the parts you need (`config/`, `db/`, `sql/`, `data_io/`, `validation/`, `dq/`); each has a small, documented surface.
 - **Stays out of your way** — runs wherever your Python runs. No hosted service, no metadata store, no UI server to operate.
 
@@ -462,12 +462,12 @@ src/reade/
 │   ├── errors/     # Exception hierarchy rooted at ReadeError
 │   ├── interfaces/ # Protocol definitions (contracts)
 │   └── models/     # Shared data models (DbMetadata)
-├── config/         # YAML loader + loader factory
-├── db/             # SQLite connector
+├── config/         # YAML / JSON loaders; typed models; env overrides
+├── db/             # SQLite / PostgreSQL / MySQL connectors
 ├── sql/            # Jinja2 template rendering + packaged templates
-├── data_io/        # Query execution
-├── validation/     # Row-count rule
-└── dq/             # Volume dimension
+├── data_io/        # Query execution; CSV reader and writer
+├── validation/     # Count / delay / null-count rules; Rule protocol
+└── dq/             # Dimensions; Dimension protocol; check golden path
 ```
 
 Each feature module is a thin slice that deepens in its hardening sprint —
