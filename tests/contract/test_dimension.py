@@ -21,12 +21,15 @@ from reade.core.errors import RuleError
 from reade.core.interfaces import ConnectionInterface
 from reade.data_io import execute_query
 from reade.db import SqliteConnector
-from reade.dq import Dimension, DqResult, VolumeDimension
+from reade.dq import Dimension, DqResult, FreshnessDimension, VolumeDimension
 from reade.validation import NullCountRule, RowCountRule
 
-# Static conformance proof: mypy verifies on this assignment that the
-# shipped dimension satisfies the protocol.
+# Static conformance proofs: mypy verifies on these assignments that
+# every shipped dimension satisfies the protocol.
 _volume_conformance: Dimension = VolumeDimension(table="events")
+_freshness_conformance: Dimension = FreshnessDimension(
+    table="events", column="created_at", max_delay_seconds=3600
+)
 
 
 class PopulatedRowsDimension:
