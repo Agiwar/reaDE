@@ -30,15 +30,15 @@ dev-install: ## Install with dev dependencies + pre-commit hooks
 
 lint: ## Run ruff linter
 	@echo "$(BLUE)Linting code...$(NC)"
-	uv run ruff check src tests
+	uv run ruff check src tests examples
 
 lint-fix: ## Run ruff linter with auto-fix
 	@echo "$(BLUE)Linting and fixing code...$(NC)"
-	uv run ruff check --fix src tests
+	uv run ruff check --fix src tests examples
 
 format: ## Format code with ruff
 	@echo "$(BLUE)Formatting code...$(NC)"
-	uv run ruff format src tests
+	uv run ruff format src tests examples
 
 type-check: ## Run mypy (strict)
 	@echo "$(BLUE)Type checking...$(NC)"
