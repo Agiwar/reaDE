@@ -68,9 +68,10 @@ source .venv/bin/activate
 
 ## Status
 
-reaDE is pre-alpha, being rebuilt as a [walking skeleton](DEVELOPMENT_PLAN.md):
-the public API surface in `core/` lands first, then thin implementations of
-the whole chain, then each module is hardened in release-gated sprints.
+reaDE is pre-alpha, built as a [walking skeleton](DEVELOPMENT_PLAN.md):
+the public API surface in `core/` landed first, then thin implementations
+of the whole chain, then each module hardened in release-gated sprints —
+complete through Phase 3. Phase 4 is release readiness.
 
 The entire chain now runs end-to-end against SQLite — see
 [`examples/end_to_end.py`](examples/end_to_end.py):
@@ -96,7 +97,6 @@ from reade.dq import CompletenessDimension, VolumeDimension, check
 | `validation/` | ✅ Hardened (3.1) | Count / delay / null-count rules; `Rule` plug-in protocol |
 | `dq/` | ✅ Hardened (3.2) | Volume / freshness / completeness dimensions; `Dimension` plug-in protocol; `check` golden path |
 
-Earlier prototype implementations are being re-landed sprint by sprint.
 
 ## Configuration
 
@@ -470,7 +470,7 @@ src/reade/
 └── dq/             # Dimensions; Dimension protocol; check golden path
 ```
 
-Each feature module is a thin slice that deepens in its hardening sprint —
+Each feature module deepened in its hardening sprint —
 see [ARCHITECTURE.md](ARCHITECTURE.md) for the target layout and dependency
 chain.
 

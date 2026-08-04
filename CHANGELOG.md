@@ -6,7 +6,58 @@ All notable changes to reaDE are documented here. The format follows
 change between minor versions until 1.0.0.
 
 reaDE is not yet published to PyPI — install from a git tag:
-`uv add "git+https://github.com/Agiwar/reaDE@v0.2.0"`.
+`uv add "git+https://github.com/Agiwar/reaDE@v0.3.0"`.
+
+## [0.3.0] — 2026-08-04
+
+Phase 3 — validation and dq.
+
+### Added
+
+- `validation`: `DelayRule` — the newest value in a timestamp column
+  is at most `max_delay_seconds` old, measured client-side against
+  the client clock in UTC (naive timestamps assumed UTC, aware values
+  normalized); an empty table raises `RuleError` — unanswerable is
+  not stale; injectable `now=` for deterministic tests.
+- `validation`: `NullCountRule` — a column holds at most `max_nulls`
+  NULLs (default 0: fully populated); an empty table reports
+  `observed=0` — zero rows contain zero NULLs.
+- `validation`: the `Rule` protocol — the custom-rule plug-in point;
+  anything with `evaluate(connector) -> RuleResult` participates
+  structurally, nothing inherits from reaDE.
+- `dq`: `FreshnessDimension` and `CompletenessDimension` join
+  `VolumeDimension` — freshness over the delay rule; completeness as
+  one null-count rule per named column under a uniform threshold,
+  outcomes reported in column order.
+- `dq`: the `Dimension` protocol — the custom-dimension plug-in
+  point; anything with `assess(connector) -> DqResult` participates
+  structurally.
+- `dq`: `DqReport` — the report shape: overall `passed` plus the
+  per-dimension `entries` tuple.
+- `dq`: `check(connector, dims=[...]) -> DqReport` — the golden
+  path. One entry per dimension in input order: a `DqResult` where
+  the dimension measured, or the caught `RuleError` where it could
+  not — errored and failed are different types, and the report
+  passes only if every dimension measured and passed. Only
+  `RuleError` is caught; `SqlError`, `DbError`, and
+  `NotConnectedError` propagate unchanged.
+- Degenerate inputs raise `DqError`: empty or bare-string `columns`
+  on completeness, empty `dims` on `check` — a measurement of
+  nothing cannot report.
+
+### Changed
+
+- Breaking (pre-registered; design-review note in PR #36):
+  `RuleResult.observed` and `RuleResult.threshold` widen from `int`
+  to `float` — count rules keep reporting exact ints (PEP 484
+  numeric tower); the annotation now covers durations honestly.
+
+### Security
+
+- The two new packaged templates (`max_timestamp`, `null_count`)
+  carry the same identifier guarantee as `row_count`: hostile table
+  and column names raise `SqlError` at render — asserted per dialect
+  and through the shipped rules; they never reach the database.
 
 ## [0.2.0] — 2026-08-02
 
@@ -90,6 +141,7 @@ Phase 0 — walking skeleton.
   zero-setup backend.
 - `examples/end_to_end.py` running the full chain against SQLite.
 
+[0.3.0]: https://github.com/Agiwar/reaDE/releases/tag/v0.3.0
 [0.2.0]: https://github.com/Agiwar/reaDE/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Agiwar/reaDE/releases/tag/v0.1.0
 [0.1.0a1]: https://github.com/Agiwar/reaDE/releases/tag/v0.1.0a1

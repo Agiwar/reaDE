@@ -31,8 +31,8 @@ The Foundation exists to serve the use cases above it. Features depend on
 | Module | Role |
 |---|---|
 | `core` | Interfaces (Protocols), enums, errors, models — shared contracts for all features |
-| `config` | Read JSON / YAML / CSV; auto-locate; return typed config objects |
-| `db` | Connection lifecycle, health check, pooling, retries |
+| `config` | Read JSON / YAML; auto-locate; return typed config objects |
+| `db` | Connection lifecycle, health check, retries |
 | `sql` | Jinja2 template → SQL, with parameter safety |
 | `data_io` | Execute query, read / write results |
 | `validation` | Rules: count, delay, null count; custom-rule plug-in point (Protocol) |
