@@ -89,6 +89,7 @@
       "abc.ABC"
     ],
     "members": {
+      "_parse_content": "(self, content: str) -> dict[str, typing.Any]",
       "load": "(self, path: pathlib.Path, /) -> dict[str, typing.Any]"
     }
   },

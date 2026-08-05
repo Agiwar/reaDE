@@ -5,7 +5,9 @@ every feature package and core subpackage — and compares the pins
 against ``tests/snapshots/public_api.json``. Functions pin as signature
 strings; classes pin as their body-defined members plus annotations, so
 a member joining a Protocol or ABC trips the pin, not only a top-level
-signature change.
+signature change. Abstract members of public ABCs are pinned even when
+single-underscore-named: a template-method hook is the extender's
+contract, so renaming or reshaping one is an API event.
 
 Pins are textual. Their exact form can vary across Python versions (CI
 runs a single version today) and can churn when a dependency that
@@ -138,7 +140,13 @@ def _pin_signature(func: Any) -> str:
 def _pin_members(cls: type) -> dict[str, str]:
     members: dict[str, str] = {}
     for name, attr in vars(cls).items():
-        if name.startswith("_") and not _is_dunder(name):
+        # Single-underscore names are internal — except abstract members,
+        # which are the extender's contract on a public ABC.
+        if (
+            name.startswith("_")
+            and not _is_dunder(name)
+            and not getattr(attr, "__isabstractmethod__", False)
+        ):
             continue
         if name in _MACHINERY_DUNDERS:
             continue
