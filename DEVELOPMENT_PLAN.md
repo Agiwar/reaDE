@@ -86,10 +86,13 @@ usable release — this closes the "everything 30%, nothing shippable" risk.
   concurrent connections (batch DQ jobs use one), and the idle-timeout
   failure mode that pools-with-pre-ping address is covered by `ping()`
   plus connect retry. Revisit at the Phase 4 API-freeze walk if a
-  concurrent consumer appears.
+  concurrent consumer appears. [2026-08-06, 4.1 kickoff: the condition
+  never fired — closed; a revival would need a real concurrent
+  consumer.]
 - Second and third connectors prove the plug-in interface: **PostgreSQL and
   MySQL** (core MVP DBs; ClickHouse/Snowflake/Oracle are out of MVP scope;
-  Trino is optional and may be deferred to Phase 4)
+  Trino is optional and may be deferred to Phase 4) [2026-08-06, 4.1
+  kickoff: Trino ruled out; revisit only on a real ask.]
 - DoD: same as 1.1 + integration tests against dockerized PostgreSQL and MySQL
 
 **Gate → tag `v0.1.0` (cut at PR #21, 2026-07-06).** TestPyPI/PyPI publish deferred by amendment to
@@ -262,7 +265,9 @@ Adds no v0.2.0 feature scope.
   the sprint's heaviest surface; it returns with a consumer (3.2 or
   the Phase 4 walk). [2026-08-03, 3.2 kickoff: weighed per the
   condition — no 3.2 dimension consumes it; consumer still absent,
-  so it stays deferred to the Phase 4 walk.] Of the parked taxonomy,
+  so it stays deferred to the Phase 4 walk.] [2026-08-06, 4.1
+  kickoff: schema rule closed — no consumer ever arrived; revives
+  with a real consumer as additive work.] Of the parked taxonomy,
   `null` is adopted;
   `agg` stays out (no plan line, no dimension consumer).
 - Plug-in point: a `Rule` protocol exported from `reade.validation` —
@@ -366,17 +371,51 @@ Adds no v0.2.0 feature scope.
 
 ---
 
-### Phase 4 — Release readiness → `v1.0.0rc1` → `v1.0.0`
+### Phase 4 — Release readiness (sprint-structured; confirmed per boundary)
 
-- API freeze review: walk every public symbol, mark experimental ones
-- Optional-scope decision point: add Trino connector here if still wanted
-- Connection ergonomics review (moved here at the 2.2 kickoff; the
-  Phase 1 publish deferral moved broad adoption to Phase 4): URI-style
-  connection strings as a config input, TLS/charset connection
-  options, password-in-URI documentation — designed together, additive
-- Docs: full README, API reference, 3+ examples
-- Performance benchmark on hot paths (config load, query execute)
-- `v1.0.0rc1` on PyPI → soak period → `v1.0.0`
+Phase 4 runs as four severable sprints. 4.1 and 4.2 are confirmed; 4.3 is
+decided at 4.2's close; 4.4 has no default — publish requires its own
+explicit decision, and nothing in 4.1–4.3 may assume it (no version moves
+toward 1.0, no rc scaffolding, no publish-flavored docs).
+
+**Sprint 4.1 — API freeze walk (confirmed)**
+- Rule the five standing design questions at their named checkpoint:
+  positional-only protocol members (ruled: flip — parameters after `self`
+  are positional-only across all four protocols; renames become legal and
+  the keyword-call hazard class is retired), ABC extender hooks join the
+  API snapshot (`FileLoaderBase._parse_content` pinned), named errored
+  entries on DqReport (closed — revives on real consumer demand),
+  schema rule (closed — revives with a consumer, additive), pooling and
+  retry jitter (closed — revives with a concurrent consumer).
+- Walk all 45 pinned public symbols; record each disposition in
+  `docs/api_freeze.md` against a stated stable/experimental rubric;
+  stability markers land in docstrings; README gains an API-stability
+  note.
+- DoD: every card ruled and its disposition recorded; walk record
+  complete (45/45, cross-checked against the snapshot); stability
+  markings landed per the ruled mechanism; checkpoint dispositions
+  recorded (connector factory, SQLAlchemy, Trino, 4.2 freeze
+  disposition); code-changing rulings land with itemized design-review
+  notes + snapshot regen in the same PR; `make check-all` green at
+  every completion claim; this amendment merged.
+
+**Sprint 4.2 — connection ergonomics (confirmed)**
+- URI-style connection strings as a config input, TLS/charset connection
+  options, password-in-URI documentation — designed together, additive.
+- Freeze disposition: 4.2's additive surface freezes through its own
+  design-review notes; a future 4.4 re-walks only that delta.
+
+**Sprint 4.3 — docs (decided at 4.2's close)**
+- API reference; example polish (the example count already exceeds the
+  original target). Full stability table from the 4.1 walk record.
+
+**Sprint 4.4 — release gate (no default; own decision)**
+- `v1.0.0rc1` on PyPI → soak period → `v1.0.0`, with its preconditions
+  (history hygiene, publish metadata) decided here if it runs.
+
+Cut from Phase 4: performance benchmarks (revisit only if a consumer
+asks). Trino connector: out — the plug-in interface is proven by three
+connectors; revisit only on a real ask.
 
 ---
 

@@ -418,11 +418,8 @@ are opt-in extras:
 - MySQL — `pip install 'reade[mysql]'` (PyMySQL)
 - Both servers — `pip install 'reade[all]'`
 
-**Planned (not yet shipped):**
-- Trino (analytics engine connector)
-
 **Not in MVP:**
-- Oracle, DB2, ClickHouse, Snowflake
+- Trino, Oracle, DB2, ClickHouse, Snowflake
 - Spark, dbt integration
 - Orchestration, CDC, streaming
 
