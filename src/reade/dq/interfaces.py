@@ -11,12 +11,10 @@ class Dimension(Protocol):
 
     The contract for anything the dq layer can assess and aggregate
     into a report. Any object with a conforming ``assess`` satisfies it
-    structurally; nothing needs to inherit from reaDE. Implementations
-    must keep the parameter name ``connector``: the protocol makes
-    keyword calls (``assess(connector=...)``) legal for every
-    conforming dimension, so a renamed parameter breaks them at
-    runtime — mypy does not flag the rename; stricter checkers reject
-    it as non-conforming.
+    structurally; nothing needs to inherit from reaDE. ``assess``'s
+    parameters are positional-only: dimensions are called
+    ``dimension.assess(connector)``, so implementations may name the
+    parameter freely — there is no keyword call for a rename to break.
 
     A dimension composes one or more validation rules and reports
     their aggregated outcome: a failed assessment is a ``DqResult``
@@ -28,7 +26,7 @@ class Dimension(Protocol):
     implementer, ours or foreign.
     """
 
-    def assess(self, connector: ConnectionInterface) -> DqResult:
+    def assess(self, connector: ConnectionInterface, /) -> DqResult:
         """Assess the dimension against a connected database.
 
         Args:

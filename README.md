@@ -326,13 +326,14 @@ NullCountRule(table="events", column="event_name").evaluate(connector)
   empty table reports `observed=0` — zero rows contain zero NULLs;
   volume is `RowCountRule`'s job.
 - **Custom rules** — anything with an
-  `evaluate(connector) -> RuleResult` method satisfies the `Rule`
+  `evaluate(connector, /) -> RuleResult` method satisfies the `Rule`
   protocol structurally; nothing inherits from reaDE, and one seam
-  runs built-in and custom rules alike. Keep the parameter name
-  `connector` — keyword calls are legal for every conforming rule.
-  A custom rule owns its own SQL — route identifiers through
-  `render_template`'s `ident` filter to get the same injection
-  guarantee the built-ins have.
+  runs built-in and custom rules alike. The protocol's parameters
+  are positional-only — rules are called `rule.evaluate(connector)`,
+  so implementations may name the parameter freely. A custom rule
+  owns its own SQL — route identifiers through `render_template`'s
+  `ident` filter to get the same injection guarantee the built-ins
+  have.
 
 See [`examples/validation_rules.py`](examples/validation_rules.py) —
 the three shipped rules plus a custom protocol-only rule evaluated
@@ -398,12 +399,13 @@ report.entries  # one entry per dimension, in dims order
   report — both propagate unchanged. Empty `dims` raise `DqError` —
   a report that measures nothing cannot pass.
 - **Custom dimensions** — anything with an
-  `assess(connector) -> DqResult` method satisfies the `Dimension`
+  `assess(connector, /) -> DqResult` method satisfies the `Dimension`
   protocol structurally; nothing inherits from reaDE, and `check`
-  runs built-in and custom dimensions alike. Keep the parameter
-  name `connector` — keyword calls are legal for every conforming
-  dimension. A custom dimension composes whatever rules it needs
-  through the same seam the shipped dimensions use.
+  runs built-in and custom dimensions alike. The protocol's
+  parameters are positional-only — dimensions are called
+  `dimension.assess(connector)`, so implementations may name the
+  parameter freely. A custom dimension composes whatever rules it
+  needs through the same seam the shipped dimensions use.
 
 See [`examples/dq_dimensions.py`](examples/dq_dimensions.py) — the
 three shipped dimensions plus a custom protocol-only dimension
