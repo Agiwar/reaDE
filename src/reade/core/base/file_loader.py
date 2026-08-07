@@ -23,6 +23,8 @@ class FileLoaderBase(ABC):
             types — so a loader can never silently parse a format it
             does not own. Factories derive their type-to-loader mapping
             from the same declaration.
+
+    Stability: stable.
     """
 
     file_types: ClassVar[frozenset[FileType]]

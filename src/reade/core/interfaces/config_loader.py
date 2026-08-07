@@ -9,6 +9,8 @@ class ConfigLoader(Protocol):
 
     Implementations handle specific formats (YAML, JSON, CSV).
     The loader is format-aware but content-agnostic.
+
+    Stability: stable.
     """
 
     def load(self, path: Path, /) -> dict[str, Any]:

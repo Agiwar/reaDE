@@ -10,6 +10,8 @@ class DbType(StrEnum):
         SQLITE: SQLite file-based database.
         MYSQL: MySQL/MariaDB server.
         POSTGRESQL: PostgreSQL server.
+
+    Stability: stable.
     """
 
     SQLITE = "sqlite"

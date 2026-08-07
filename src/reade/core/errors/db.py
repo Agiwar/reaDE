@@ -9,6 +9,8 @@ class DbError(ReadeError):
     Covers the connection lifecycle (connect, health check, close) and
     statement execution. Connectors map driver-specific exceptions into
     this error.
+
+    Stability: stable.
     """
 
 
@@ -17,4 +19,6 @@ class NotConnectedError(DbError):
 
     Accessing a connector's underlying driver connection, or executing
     work through it, requires an established connection.
+
+    Stability: stable.
     """

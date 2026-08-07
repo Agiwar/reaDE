@@ -18,6 +18,8 @@ class DqResult:
         passed: Whether every underlying rule passed.
         rule_results: The individual rule outcomes the dimension
             aggregated.
+
+    Stability: stable.
     """
 
     dimension: str
@@ -41,6 +43,8 @@ class DqReport:
         entries: Per-dimension outcomes in input order — a
             ``DqResult`` for each measured dimension, the caught
             ``RuleError`` for each errored one.
+
+    Stability: stable.
     """
 
     passed: bool

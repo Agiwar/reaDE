@@ -37,6 +37,8 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         ... ) as connector:
         ...     connector.ping()
         True
+
+    Stability: stable.
     """
 
     db_type: ClassVar[DbType] = DbType.POSTGRESQL

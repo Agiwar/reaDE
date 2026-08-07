@@ -17,6 +17,8 @@ class ConfigLoaderFactory:
     mapping is derived from each loader's own ``file_types`` declaration,
     sharing one source of truth with the suffix guard in
     ``FileLoaderBase.load``.
+
+    Stability: stable.
     """
 
     _loaders: ClassVar[dict[FileType, type[FileLoaderBase]]] = {

@@ -20,6 +20,8 @@ class DbMetadata:
         default_port: Default connection port (None for file-based DBs).
         default_driver: Default Python driver package.
         uri_scheme: SQLAlchemy URI scheme.
+
+    Stability: stable.
     """
 
     db_type: DbType
@@ -29,6 +31,7 @@ class DbMetadata:
     uri_scheme: str
 
 
+# Stability: stable.
 DB_METADATA_REGISTRY: Mapping[DbType, DbMetadata] = MappingProxyType(
     {
         DbType.SQLITE: DbMetadata(

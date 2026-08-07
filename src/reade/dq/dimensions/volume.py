@@ -10,6 +10,8 @@ class VolumeDimension:
 
     Composed from the validation layer: today the dimension is the
     ``row_count`` rule, aggregated into a ``DqResult``.
+
+    Stability: stable.
     """
 
     def __init__(self, table: str, min_rows: int = 1) -> None:

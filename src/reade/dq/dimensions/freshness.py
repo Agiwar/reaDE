@@ -10,6 +10,8 @@ class FreshnessDimension:
 
     Composed from the validation layer: the ``delay`` rule's freshness
     measurement, aggregated into a ``DqResult``.
+
+    Stability: stable.
     """
 
     def __init__(self, table: str, column: str, max_delay_seconds: float) -> None:

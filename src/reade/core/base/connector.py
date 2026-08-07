@@ -26,6 +26,8 @@ class ConnectionBase[T](ABC):
     Type Parameters:
         T: The underlying driver connection type
             (e.g., ``sqlite3.Connection``).
+
+    Stability: stable.
     """
 
     db_type: ClassVar[DbType]

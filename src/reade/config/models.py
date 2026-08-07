@@ -20,6 +20,8 @@ class SqliteConfig(BaseModel):
 
     Attributes:
         database: Path to the SQLite database file, or ``:memory:``.
+
+    Stability: stable.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -54,6 +56,8 @@ class PostgresConfig(BaseModel):
         connect_attempts: Total connect() attempts; 1 means no retry.
         retry_backoff: Delay before the second attempt, in seconds;
             doubles after each subsequent failure.
+
+    Stability: stable.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -95,6 +99,8 @@ class MysqlConfig(BaseModel):
         connect_attempts: Total connect() attempts; 1 means no retry.
         retry_backoff: Delay before the second attempt, in seconds;
             doubles after each subsequent failure.
+
+    Stability: stable.
     """
 
     model_config = ConfigDict(extra="forbid")

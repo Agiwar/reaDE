@@ -25,6 +25,8 @@ class SqliteConnector(ConnectionBase[sqlite3.Connection]):
         >>> with SqliteConnector(database=":memory:") as connector:
         ...     connector.ping()
         True
+
+    Stability: stable.
     """
 
     db_type: ClassVar[DbType] = DbType.SQLITE
