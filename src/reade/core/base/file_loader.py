@@ -27,7 +27,7 @@ class FileLoaderBase(ABC):
 
     file_types: ClassVar[frozenset[FileType]]
 
-    def load(self, path: Path) -> dict[str, Any]:
+    def load(self, path: Path, /) -> dict[str, Any]:
         """Load a configuration file and return its parsed content.
 
         Args:

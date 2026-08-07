@@ -21,7 +21,7 @@ class VolumeDimension:
         """
         self._rule: Rule = RowCountRule(table=table, min_rows=min_rows)
 
-    def assess(self, connector: ConnectionInterface) -> DqResult:
+    def assess(self, connector: ConnectionInterface, /) -> DqResult:
         """Assess the dimension against a connected database.
 
         Args:

@@ -51,7 +51,7 @@ class CompletenessDimension:
             for column in columns
         )
 
-    def assess(self, connector: ConnectionInterface) -> DqResult:
+    def assess(self, connector: ConnectionInterface, /) -> DqResult:
         """Assess the dimension against a connected database.
 
         Args:

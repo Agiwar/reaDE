@@ -33,7 +33,7 @@ class NullCountRule:
         self._column = column
         self._max_nulls = max_nulls
 
-    def evaluate(self, connector: ConnectionInterface) -> RuleResult:
+    def evaluate(self, connector: ConnectionInterface, /) -> RuleResult:
         """Evaluate the rule against a connected database.
 
         Args:

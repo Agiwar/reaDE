@@ -159,7 +159,7 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         return self._connection is not None
 
     def execute(
-        self, sql: str, params: dict[str, Any] | None = None
+        self, sql: str, params: dict[str, Any] | None = None, /
     ) -> list[tuple[Any, ...]]:
         """Execute a SQL statement and return all result rows, materialized.
 

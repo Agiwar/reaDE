@@ -11,7 +11,7 @@ class ConfigLoader(Protocol):
     The loader is format-aware but content-agnostic.
     """
 
-    def load(self, path: Path) -> dict[str, Any]:
+    def load(self, path: Path, /) -> dict[str, Any]:
         """Load configuration file and return parsed content.
 
         Args:

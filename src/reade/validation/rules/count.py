@@ -25,7 +25,7 @@ class RowCountRule:
         self._table = table
         self._min_rows = min_rows
 
-    def evaluate(self, connector: ConnectionInterface) -> RuleResult:
+    def evaluate(self, connector: ConnectionInterface, /) -> RuleResult:
         """Evaluate the rule against a connected database.
 
         Args:

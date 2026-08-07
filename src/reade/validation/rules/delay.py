@@ -48,7 +48,7 @@ class DelayRule:
         self._max_delay_seconds = max_delay_seconds
         self._now = now
 
-    def evaluate(self, connector: ConnectionInterface) -> RuleResult:
+    def evaluate(self, connector: ConnectionInterface, /) -> RuleResult:
         """Evaluate the rule against a connected database.
 
         Args:

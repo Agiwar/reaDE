@@ -25,7 +25,7 @@ class FreshnessDimension:
             table=table, column=column, max_delay_seconds=max_delay_seconds
         )
 
-    def assess(self, connector: ConnectionInterface) -> DqResult:
+    def assess(self, connector: ConnectionInterface, /) -> DqResult:
         """Assess the dimension against a connected database.
 
         Args:

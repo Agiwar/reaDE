@@ -153,17 +153,19 @@ class TestDimensionProtocol:
         with pytest.raises(RuleError):
             VolumeDimension(table="events").assess(NoRowsConnector())
 
-    def test_keyword_call_is_legal_for_conforming_dimensions(
+    def test_keyword_call_is_rejected_positional_only(
         self, connector: SqliteConnector
     ) -> None:
-        # The protocol's name-lock contract: implementations keep the
-        # parameter name ``connector``, so keyword calls work against
-        # shipped and protocol-only dimensions alike.
+        # The protocol's parameters are positional-only: there is no
+        # keyword call for a parameter rename to break, so the name-lock
+        # contract is retired — a keyword call is a TypeError against
+        # every conforming dimension.
         dimension: Dimension = VolumeDimension(table="events")
 
-        outcome = dimension.assess(connector=connector)
-
-        assert outcome.passed
+        with pytest.raises(TypeError):
+            # The static error is the contract working; the runtime
+            # assertion proves the same rejection without a checker.
+            dimension.assess(connector=connector)  # type: ignore[call-arg]
 
     def test_protocol_only_dimension_reports_through_check(
         self, connector: SqliteConnector
