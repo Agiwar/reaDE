@@ -399,11 +399,73 @@ toward 1.0, no rc scaffolding, no publish-flavored docs).
   notes + snapshot regen in the same PR; `make check-all` green at
   every completion claim; this amendment merged.
 
-**Sprint 4.2 — connection ergonomics (confirmed)**
+**Sprint 4.2 — connection ergonomics (confirmed; scope and DoD ratified
+at the 4.2 kickoff, 2026-08-07)**
 - URI-style connection strings as a config input, TLS/charset connection
   options, password-in-URI documentation — designed together, additive.
+  Zero new public symbols: the surface is new optional fields and
+  keyword-only parameters on already-pinned symbols.
+- URI input: a `uri` field on each config model, validator-expanded, so
+  one `DATABASE_URL`-style string arrives through the existing file and
+  env-override machinery (`READE__POSTGRES__URI=postgresql://…`). A URI
+  encodes who and where — host, port, user, password, database: setting
+  `uri` together with any URI-encoded field raises `ConfigError`, while
+  option fields (retry knobs, TLS, charset) compose with `uri` freely.
+  Plain schemes only (`postgresql`, `mysql`, `sqlite`); driver-qualified
+  `+` forms are rejected with guidance. The registry's `uri_scheme`
+  values change to the plain schemes — a data-default change, ruled at
+  this kickoff — making the registry the single scheme→backend source
+  of truth. Query parameters are allowlisted to exactly the connection
+  options this sprint ships, per backend; unknown keys raise
+  `ConfigError`; no retry/timeout keys (deploy knobs, not URI content).
+  SQLite included (`sqlite:///path.db`). Percent-decoded credentials,
+  IPv6 bracket hosts, missing port → registry default; empty components
+  fail loud.
+- TLS/charset options: per-driver honesty — each connector mirrors its
+  own driver's parameter names as typed keyword-only parameters, with
+  matching optional config fields (the flat field↔parameter mirror):
+  PostgreSQL `sslmode` / `sslrootcert` / `sslcert` / `sslkey`; MySQL
+  `charset` / `ssl_ca` / `ssl_cert` / `ssl_key` / `ssl_verify_cert` /
+  `ssl_verify_identity`. No unified TLS vocabulary — an invented
+  taxonomy with a permanent translation table. Unset options are
+  omitted from the driver call entirely, so existing connections behave
+  byte-identically. Out, additive later on a real ask:
+  `ssl_key_password`; PostgreSQL `client_encoding`.
+- Password containment: the `uri` field is repr-masked like `password`;
+  a parsed password never appears in validation-error output (asserted
+  by test). README's Configuration section carries the password-in-URI
+  exposure note (process listings, shell history, logs — prefer env
+  overrides; percent-encoding guidance), cross-referenced from Database
+  Connections.
+- Wire posture: kwarg-capture tests prove every option reaches the
+  driver `connect()` on both server connectors; TLS negotiation is
+  asserted against dockerized MySQL — the backend documented as not yet
+  reachable over TLS gets proven reachable, not declared; PostgreSQL's
+  posture stays declared on the libpq-environment precedent already in
+  the README. If the MySQL TLS fixture exceeds its box, falling back to
+  declared-only is an explicit escalation, not a quiet drop.
 - Freeze disposition: 4.2's additive surface freezes through its own
-  design-review notes; a future 4.4 re-walks only that delta.
+  design-review notes; a future 4.4 re-walks only that delta. Every
+  addition lands with an itemized design-review note and snapshot regen
+  in the same PR, carries its stability marker, and joins the walk
+  record as the 4.2 delta.
+- DoD: 1.1 baseline (≥90% coverage gate on touched modules in CI,
+  README sections, example) + `make check-all` green at every
+  completion claim (the standing completion contract) + every additive
+  field and parameter named in this entry, each landing with its
+  itemized design-review note and snapshot regen in the same PR (the
+  freeze-disposition mechanism above), snapshot diffs additions-only
+  with every pin outside `config`/`db` byte-identical + malformed or
+  unsupported URIs raise `ConfigError`, and the embedded password never
+  appears in reprs or validation-error output, asserted by test +
+  TLS/charset options verifiably reach each driver's `connect()`
+  (kwarg-capture, both server connectors), defaults byte-identical when
+  unset, and TLS negotiation asserted dockerized on MySQL + README
+  config and db sections updated, the v0.1.x known-limitations block
+  retired by the PR that ships the options, and the password-in-URI
+  note shipping with the URI PR + the acceptance example runs red
+  before the first feature branch and green at close, committed at
+  closeout.
 
 **Sprint 4.3 — docs (decided at 4.2's close)**
 - API reference; example polish (the example count already exceeds the
