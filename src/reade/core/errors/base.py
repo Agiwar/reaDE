@@ -9,4 +9,6 @@ class ReadeError(Exception):
     are mapped into this hierarchy at the implementation layer, so callers
     can catch ``ReadeError`` for any reaDE failure or a subclass for a
     module-specific one.
+
+    Stability: stable.
     """

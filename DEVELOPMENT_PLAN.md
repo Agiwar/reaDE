@@ -387,12 +387,12 @@ toward 1.0, no rc scaffolding, no publish-flavored docs).
   entries on DqReport (closed — revives on real consumer demand),
   schema rule (closed — revives with a consumer, additive), pooling and
   retry jitter (closed — revives with a concurrent consumer).
-- Walk all 45 pinned public symbols; record each disposition in
+- Walk all 44 pinned public symbols; record each disposition in
   `docs/api_freeze.md` against a stated stable/experimental rubric;
   stability markers land in docstrings; README gains an API-stability
   note.
 - DoD: every card ruled and its disposition recorded; walk record
-  complete (45/45, cross-checked against the snapshot); stability
+  complete (44/44, cross-checked against the snapshot); stability
   markings landed per the ruled mechanism; checkpoint dispositions
   recorded (connector factory, SQLAlchemy, Trino, 4.2 freeze
   disposition); code-changing rulings land with itemized design-review

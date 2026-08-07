@@ -13,6 +13,8 @@ class ConnectionInterface(Protocol):
     resources with the same lifecycle (establish, health-check, close)
     can satisfy it structurally, but the SDK's error taxonomy and
     health-check semantics are designed around database connections.
+
+    Stability: stable.
     """
 
     @property

@@ -57,6 +57,8 @@ def merge_env_overrides(
 
     Returns:
         A new dictionary with the overrides applied.
+
+    Stability: stable.
     """
     if environ is None:
         environ = os.environ

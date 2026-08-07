@@ -10,6 +10,8 @@ class FileType(StrEnum):
         YAML: YAML config files (.yaml, .yml).
         JSON: JSON config/data files.
         CSV: CSV data files.
+
+    Stability: stable.
     """
 
     YAML = ".yaml"

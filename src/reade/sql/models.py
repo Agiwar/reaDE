@@ -33,6 +33,8 @@ class RenderedQuery:
     Attributes:
         sql: The rendered SQL text — placeholders, never values.
         params: Bound values keyed by placeholder name.
+
+    Stability: stable.
     """
 
     sql: str

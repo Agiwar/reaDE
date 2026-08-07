@@ -37,6 +37,8 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
         ... ) as connector:
         ...     connector.ping()
         True
+
+    Stability: stable.
     """
 
     db_type: ClassVar[DbType] = DbType.MYSQL

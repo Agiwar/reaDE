@@ -83,6 +83,8 @@ def load_config[ModelT: BaseModel](
         exception type raised by user-owned validator code propagates
         unchanged — deliberately, since wrapping it would mask validator
         bugs as config errors.
+
+    Stability: stable.
     """
     scope = _validated_env_prefix(model)
     path = _resolve_config_path(name, search_paths)

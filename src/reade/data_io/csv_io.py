@@ -48,6 +48,8 @@ def read_csv(path: str | Path) -> Iterator[dict[str, str]]:
             error is attached as the cause.
         OSError: If the file cannot be opened or read; passed through
             unchanged (including ``FileNotFoundError``).
+
+    Stability: stable.
     """
     # The returned iterator owns the handle: _generate_rows wraps it in
     # a with-block, so it closes on exhaustion, error, or generator
@@ -149,6 +151,8 @@ def write_csv(path: str | Path, rows: Iterable[Mapping[str, Any]]) -> None:
             a row's keys differ from the first row's.
         OSError: If the file cannot be created or written; passed
             through unchanged.
+
+    Stability: stable.
     """
     iterator = iter(rows)
     try:

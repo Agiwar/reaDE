@@ -17,6 +17,8 @@ class RuleResult:
             in seconds. Count rules report exact ``int`` values, valid
             wherever ``float`` is expected (PEP 484 numeric tower).
         threshold: The bound the observed value was compared against.
+
+    Stability: stable.
     """
 
     rule: str

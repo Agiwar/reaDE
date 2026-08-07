@@ -12,4 +12,6 @@ class RuleError(ReadeError):
     Named ``RuleError`` (not ``ValidationError``) to avoid colliding with
     ``pydantic.ValidationError`` in user code and in this SDK's own
     config layer.
+
+    Stability: stable.
     """

@@ -24,6 +24,8 @@ class Dimension(Protocol):
     an unanswerable measurement means for a report belongs to the
     reporting layer above, not to the dimension. This binds every
     implementer, ours or foreign.
+
+    Stability: stable.
     """
 
     def assess(self, connector: ConnectionInterface, /) -> DqResult:

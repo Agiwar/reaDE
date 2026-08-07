@@ -108,6 +108,8 @@ def render_template(
             statement contains a stray ``%`` that must be written
             ``%%``; or if a ``search_paths`` entry is not an existing
             directory.
+
+    Stability: stable.
     """
     resolved = _resolved_search_paths(search_paths)
     env = _build_environment(resolved)

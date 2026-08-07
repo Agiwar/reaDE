@@ -13,6 +13,8 @@ class RowCountRule:
 
     Composes the chain below it: renders the ``row_count`` SQL template
     and executes it through the given connector.
+
+    Stability: stable.
     """
 
     def __init__(self, table: str, min_rows: int = 1) -> None:

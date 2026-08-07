@@ -41,6 +41,8 @@ def check(connector: ConnectionInterface, dims: Sequence[Dimension]) -> DqReport
             ``SqlError`` (a hostile identifier is a caller bug, not a
             data condition) and ``DbError`` (a dead connection aborts
             the report), ``NotConnectedError`` included, pass through.
+
+    Stability: stable.
     """
     if not dims:
         raise DqError(

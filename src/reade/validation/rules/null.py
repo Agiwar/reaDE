@@ -18,6 +18,8 @@ class NullCountRule:
     An empty table reports ``observed=0``: zero rows contain zero
     NULLs, so the measure is defined and exact — an empty pipeline is
     the volume dimension's finding, not a completeness error.
+
+    Stability: stable.
     """
 
     def __init__(self, table: str, column: str, max_nulls: int = 0) -> None:

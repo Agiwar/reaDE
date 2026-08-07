@@ -22,6 +22,8 @@ class DelayRule:
     normalized to UTC. Future timestamps yield a negative delay and
     pass. ``date`` values measure from midnight UTC — a today-valued
     column reads up to a day old, erring toward staleness.
+
+    Stability: stable.
     """
 
     def __init__(

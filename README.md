@@ -97,6 +97,16 @@ from reade.dq import CompletenessDimension, VolumeDimension, check
 | `validation/` | ✅ Hardened (3.1) | Count / delay / null-count rules; `Rule` plug-in protocol |
 | `dq/` | ✅ Hardened (3.2) | Volume / freshness / completeness dimensions; `Dimension` plug-in protocol; `check` golden path |
 
+### API stability
+
+All 44 exported symbols across the 11 public packages are **stable** as
+of the Phase 4 API freeze walk — see
+[`docs/api_freeze.md`](docs/api_freeze.md) for the per-symbol record and
+the classification rubric. The surface is machine-pinned by a snapshot
+test: changing any public signature or class member fails CI until the
+change ships with a design-review note. Protocol member parameters
+(`evaluate` / `assess` / `load` / `execute`) are positional-only.
+
 
 ## Configuration
 

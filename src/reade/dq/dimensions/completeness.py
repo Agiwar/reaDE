@@ -16,6 +16,8 @@ class CompletenessDimension:
     ``DqResult`` that passes only if every column does. An empty table
     passes — zero rows contain zero NULLs, so every count is defined
     and exact; an empty pipeline is the volume dimension's finding.
+
+    Stability: stable.
     """
 
     def __init__(self, table: str, columns: Sequence[str], max_nulls: int = 0) -> None:

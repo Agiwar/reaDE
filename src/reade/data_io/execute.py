@@ -39,5 +39,7 @@ def execute_query(
         NotConnectedError: If the connector is not connected.
         DbError: If the driver fails to execute the statement or fetch
             its results. The driver exception is attached as the cause.
+
+    Stability: stable.
     """
     return connector.execute(sql, params)

@@ -21,6 +21,8 @@ class Rule(Protocol):
     check is a ``RuleResult`` with ``passed=False``, never a raise.
     Raising is reserved for evaluation failures — the rule could not
     measure at all. This binds every implementer, ours or foreign.
+
+    Stability: stable.
     """
 
     def evaluate(self, connector: ConnectionInterface, /) -> RuleResult:

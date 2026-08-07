@@ -12,6 +12,8 @@ class JsonLoader(FileLoaderBase):
 
     Format-specific parsing only; reading, suffix validation, and error
     mapping live in ``FileLoaderBase``.
+
+    Stability: stable.
     """
 
     file_types: ClassVar[frozenset[FileType]] = frozenset({FileType.JSON})
