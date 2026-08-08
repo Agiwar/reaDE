@@ -155,3 +155,24 @@ not by mood.
 - The closed questions above each carry a revival condition; if one
   fires, the work re-files as new, additive scope — nothing reopens
   silently.
+
+## Sprint 4.2 delta — connection ergonomics (2026-08-08)
+
+Recorded per the freeze disposition ruled at the 4.1 kickoff: 4.2's
+additive surface freezes through its itemized design-review notes; a
+future release gate re-walks only this delta. No symbol joined or left
+the pinned surface — the count stays **44**.
+
+| Change | Kind | Freeze record |
+|---|---|---|
+| `PostgresConnector.__init__` + `PostgresConfig`: keyword-only TLS options `sslmode` / `sslrootcert` / `sslcert` / `sslkey` (libpq vocabulary; unset means omitted from the driver call) | Additive parameters/fields on pinned symbols | PR #51 design-review note |
+| `MysqlConnector.__init__` + `MysqlConfig`: keyword-only options `charset` / `ssl_ca` / `ssl_cert` / `ssl_key` / `ssl_verify_cert` / `ssl_verify_identity` (pymysql vocabulary; `ssl_verify_identity` is effective only together with `ssl_ca`) | Additive parameters/fields on pinned symbols | PR #51 design-review note |
+| `uri` config-input key on all three models — consumed by pre-validation expansion, never a field; plain schemes only; who/where-vs-options conflict rule; allowlisted query parameters | Additive input contract (no signature change — docstrings, README, and tests carry it, as with env-variable names) | PR #52 design-review note |
+| `DB_METADATA_REGISTRY` `uri_scheme` values → plain schemes (`postgresql`, `mysql`, `sqlite`) — the scheme→backend anchor | Data-default change (values, not shape; behavioral for consumers deriving URLs from the registry) | PR #52 design-review note |
+| `load_config` validation errors carry field paths and messages only — input values never echoed; the chained `ValidationError` retains them | Behavior fix, message tier | PR #53 design-review note |
+| PostgreSQL wire posture → **acceptance-proven, negotiation declared**: conninfo acceptance (all four TLS options parsed by libpq on a green connect) and a required-TLS control proven against the dockerized server; negotiation stays declared on the libpq-environment precedent | Posture amendment (probe-gated ruling; probe held) | PR #53 design-review note |
+
+Option types stay wide by ruling: `sslmode` is `str`, not a `Literal`
+(libpq's value set has grown before), and cert paths are `str`, not
+`Path` — driver honesty first (the drivers take strings; existence is
+a connect-time fact on the connecting host), freeze asymmetry second.

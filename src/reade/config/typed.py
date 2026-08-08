@@ -73,9 +73,11 @@ def load_config[ModelT: BaseModel](
             content cannot be parsed, validation fails, or the model
             declares an invalid ``env_prefix`` (a pydantic field instead
             of a ClassVar, a non-string, or an empty string). Validation
-            failures carry pydantic's field-path report in the message,
-            with the original ``ValidationError`` attached as the cause
-            (``raise ... from``).
+            failures carry the field-path report in the message — field
+            paths and messages only, never input values, so a secret
+            under a typo'd key cannot echo; the original
+            ``ValidationError`` attached as the cause (``raise ...
+            from``) retains the values for debugging.
 
     Note:
         pydantic turns only ``ValueError``/``AssertionError`` from a
@@ -100,7 +102,14 @@ def load_config[ModelT: BaseModel](
     try:
         return model.model_validate(data)
     except ValidationError as e:
-        raise ConfigError(f"Invalid config {str(path)!r}:\n{e}") from e
+        # Field paths and messages only — input values never enter the
+        # message, so a secret under a typo'd key (url= for uri=) cannot
+        # echo. The chained cause retains them for debugging.
+        details = "\n".join(
+            f"  {'.'.join(str(part) for part in err['loc']) or '<model>'}: {err['msg']}"
+            for err in e.errors()
+        )
+        raise ConfigError(f"Invalid config {str(path)!r}:\n{details}") from e
 
 
 def _validated_env_prefix(model: type[BaseModel]) -> str | None:
