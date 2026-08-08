@@ -254,6 +254,47 @@ class TestSqlite:
             _sq(uri="sqlite:///x.db", database="y.db")
 
 
+class TestNearMissKeys:
+    """A composite secret under a typo'd key must not echo.
+
+    ``url=`` for ``uri=`` is the exact typo the URI feature invites: it
+    sails past the expansion (which looks only for ``uri``) into
+    pydantic's extra-forbidden error. The ``ConfigError`` string must
+    carry the field-path report without input values — the chained
+    ``ValidationError`` retains them for debugging.
+    """
+
+    def test_typo_url_key_error_never_echoes_the_password(
+        self, tmp_path: "Path"
+    ) -> None:
+        file_path = tmp_path / "db.yaml"
+        file_path.write_text(f'url: "{PG_URI}"\n', encoding="utf-8")
+
+        with pytest.raises(ConfigError) as exc_info:
+            load_config(file_path, model=PostgresConfig)
+
+        message = str(exc_info.value)
+        assert "url" in message  # the field path survives redaction
+        assert "s@fe" not in message
+        assert "s%40fe" not in message
+
+    def test_env_lane_url_typo_never_echoes(self, tmp_path: "Path") -> None:
+        file_path = tmp_path / "empty.yaml"
+        file_path.write_text("{}\n", encoding="utf-8")
+
+        with pytest.raises(ConfigError) as exc_info:
+            load_config(
+                file_path,
+                model=PostgresConfig,
+                environ={"READE__POSTGRES__URL": PG_URI},
+            )
+
+        message = str(exc_info.value)
+        assert "url" in message
+        assert "s@fe" not in message
+        assert "s%40fe" not in message
+
+
 class TestLoadConfigPath:
     def test_uri_from_file(self, tmp_path: "Path") -> None:
         file_path = tmp_path / "db.yaml"

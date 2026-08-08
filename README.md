@@ -167,8 +167,9 @@ with SqliteConnector(database=config.database) as connector:
   override to a URI committed in a file, or keep the password out of
   the URI entirely by using the separate fields. Percent-encode
   reserved characters in credentials (`@` → `%40`); reaDE decodes
-  them. Expansion never retains or echoes the URI: validation errors
-  name components and keys, never values.
+  them. Expansion never retains or echoes the URI, and `load_config`
+  validation errors carry field paths and messages only — even a
+  secret under a typo'd key (`url` for `uri`) stays out of the report.
 - **Validation failures** raise reaDE's own `ConfigError` carrying the
   field-path report; `ConfigLoader.load(path)` remains the untyped
   dict layer underneath.
