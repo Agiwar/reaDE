@@ -466,3 +466,50 @@ class TestScopedModels:
                     assert field.is_required(), name
                 else:
                     assert field.default == parameter.default, name
+
+
+class TestConnectionOptionFields:
+    """The 4.2 TLS/charset option fields through the typed layer."""
+
+    def test_option_fields_default_to_none(self, tmp_path: Path) -> None:
+        # Unset options stay None end to end — the omitted-from-the-
+        # driver-call contract starts at the config layer.
+        file_path = tmp_path / "postgres.yaml"
+        file_path.write_text(
+            "host: h\ndatabase: d\nuser: u\npassword: p\n", encoding="utf-8"
+        )
+
+        config = load_config(file_path, model=PostgresConfig)
+
+        assert config.sslmode is None
+        assert config.sslrootcert is None
+        assert config.sslcert is None
+        assert config.sslkey is None
+
+    def test_scoped_override_reaches_string_option_field(self, tmp_path: Path) -> None:
+        file_path = tmp_path / "postgres.yaml"
+        file_path.write_text(
+            "host: h\ndatabase: d\nuser: u\npassword: p\n", encoding="utf-8"
+        )
+
+        config = load_config(
+            file_path,
+            model=PostgresConfig,
+            environ={"READE__POSTGRES__SSLMODE": "require"},
+        )
+
+        assert config.sslmode == "require"
+
+    def test_scoped_override_coerces_bool_option_field(self, tmp_path: Path) -> None:
+        file_path = tmp_path / "mysql.yaml"
+        file_path.write_text(
+            "host: h\ndatabase: d\nuser: u\npassword: p\n", encoding="utf-8"
+        )
+
+        config = load_config(
+            file_path,
+            model=MysqlConfig,
+            environ={"READE__MYSQL__SSL_VERIFY_CERT": "true"},
+        )
+
+        assert config.ssl_verify_cert is True

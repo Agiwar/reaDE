@@ -56,6 +56,14 @@ class PostgresConfig(BaseModel):
         connect_attempts: Total connect() attempts; 1 means no retry.
         retry_backoff: Delay before the second attempt, in seconds;
             doubles after each subsequent failure.
+        sslmode: libpq TLS mode (e.g. ``require``, ``verify-full``);
+            ``None`` omits the option from the connector's driver call.
+        sslrootcert: Path to the CA certificate file used to verify the
+            server; ``None`` omits the option.
+        sslcert: Path to the client certificate file; ``None`` omits
+            the option.
+        sslkey: Path to the client private key file; ``None`` omits
+            the option.
 
     Stability: stable.
     """
@@ -72,6 +80,10 @@ class PostgresConfig(BaseModel):
     connect_timeout: int | None = None
     connect_attempts: int = 1
     retry_backoff: float = 0.5
+    sslmode: str | None = None
+    sslrootcert: str | None = None
+    sslcert: str | None = None
+    sslkey: str | None = None
 
 
 class MysqlConfig(BaseModel):
@@ -99,6 +111,18 @@ class MysqlConfig(BaseModel):
         connect_attempts: Total connect() attempts; 1 means no retry.
         retry_backoff: Delay before the second attempt, in seconds;
             doubles after each subsequent failure.
+        charset: Connection character set (e.g. ``utf8mb4``); ``None``
+            omits the option from the connector's driver call.
+        ssl_ca: Path to the CA certificate file used to verify the
+            server; ``None`` omits the option.
+        ssl_cert: Path to the client certificate file; ``None`` omits
+            the option.
+        ssl_key: Path to the client private key file; ``None`` omits
+            the option.
+        ssl_verify_cert: Verify the server certificate against the CA;
+            ``False`` disables verification (forwarded, not omitted).
+        ssl_verify_identity: Also verify that the server hostname
+            matches the certificate; ``None`` omits the option.
 
     Stability: stable.
     """
@@ -115,3 +139,9 @@ class MysqlConfig(BaseModel):
     connect_timeout: int | None = None
     connect_attempts: int = 1
     retry_backoff: float = 0.5
+    charset: str | None = None
+    ssl_ca: str | None = None
+    ssl_cert: str | None = None
+    ssl_key: str | None = None
+    ssl_verify_cert: bool | None = None
+    ssl_verify_identity: bool | None = None

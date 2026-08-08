@@ -53,8 +53,21 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
         connect_timeout: int | None = None,
         connect_attempts: int = 1,
         retry_backoff: float = 0.5,
+        *,
+        charset: str | None = None,
+        ssl_ca: str | None = None,
+        ssl_cert: str | None = None,
+        ssl_key: str | None = None,
+        ssl_verify_cert: bool | None = None,
+        ssl_verify_identity: bool | None = None,
     ) -> None:
         """Initialize the connector.
+
+        Connection options mirror pymysql's own parameter names. An
+        unset option (``None``) is omitted from the driver call
+        entirely, so pymysql's defaults keep applying; an explicit
+        ``False`` on a boolean option is forwarded as a real value,
+        never treated as unset.
 
         Args:
             host: Server hostname or IP address.
@@ -69,6 +82,16 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
                 means no retry.
             retry_backoff: Delay before the second attempt, in seconds;
                 doubles after each subsequent failure.
+            charset: Connection character set (e.g. ``utf8mb4``).
+            ssl_ca: Path to the CA certificate file used to verify the
+                server.
+            ssl_cert: Path to the client certificate file.
+            ssl_key: Path to the client private key file.
+            ssl_verify_cert: Verify the server certificate against the
+                CA. ``False`` disables verification (forwarded, not
+                omitted).
+            ssl_verify_identity: Also verify that the server hostname
+                matches the certificate.
 
         Raises:
             ImportError: If the ``pymysql`` driver is not installed
@@ -90,6 +113,12 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
         self._connect_timeout = connect_timeout
         self._connect_attempts = connect_attempts
         self._retry_backoff = retry_backoff
+        self._charset = charset
+        self._ssl_ca = ssl_ca
+        self._ssl_cert = ssl_cert
+        self._ssl_key = ssl_key
+        self._ssl_verify_cert = ssl_verify_cert
+        self._ssl_verify_identity = ssl_verify_identity
 
     def connect(self) -> None:
         """Establish the connection, retrying transient failures.
@@ -128,8 +157,21 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
             "password": self._password,
             "autocommit": True,
         }
-        if self._connect_timeout is not None:
-            kwargs["connect_timeout"] = self._connect_timeout
+        kwargs.update(
+            {
+                key: value
+                for key, value in (
+                    ("connect_timeout", self._connect_timeout),
+                    ("charset", self._charset),
+                    ("ssl_ca", self._ssl_ca),
+                    ("ssl_cert", self._ssl_cert),
+                    ("ssl_key", self._ssl_key),
+                    ("ssl_verify_cert", self._ssl_verify_cert),
+                    ("ssl_verify_identity", self._ssl_verify_identity),
+                )
+                if value is not None
+            }
+        )
         return pymysql.connect(**kwargs)
 
     def close(self) -> None:

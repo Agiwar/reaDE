@@ -214,6 +214,41 @@ class TestConnect:
         assert sleeps == [0.5, 1.0]
 
 
+class TestTlsOptions:
+    def test_tls_options_forwarded_verbatim_when_set(
+        self, fake_psycopg: FakePsycopg
+    ) -> None:
+        connector = PostgresConnector(
+            host="h",
+            database="d",
+            user="u",
+            password="p",
+            sslmode="verify-full",
+            sslrootcert="/certs/ca.pem",
+            sslcert="/certs/client.pem",
+            sslkey="/certs/client.key",
+        )
+        connector.connect()
+
+        assert fake_psycopg.connect_kwargs is not None
+        assert fake_psycopg.connect_kwargs["sslmode"] == "verify-full"
+        assert fake_psycopg.connect_kwargs["sslrootcert"] == "/certs/ca.pem"
+        assert fake_psycopg.connect_kwargs["sslcert"] == "/certs/client.pem"
+        assert fake_psycopg.connect_kwargs["sslkey"] == "/certs/client.key"
+
+    def test_unset_tls_options_are_omitted_from_driver_kwargs(
+        self, connector: PostgresConnector, fake_psycopg: FakePsycopg
+    ) -> None:
+        # The byte-identical guarantee: an unset option is omitted from
+        # the driver call entirely, never passed as None.
+        connector.connect()
+
+        assert fake_psycopg.connect_kwargs is not None
+        assert {"sslmode", "sslrootcert", "sslcert", "sslkey"}.isdisjoint(
+            fake_psycopg.connect_kwargs
+        )
+
+
 class TestLifecycle:
     def test_close_is_idempotent_when_never_connected(
         self, connector: PostgresConnector

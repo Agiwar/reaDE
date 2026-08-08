@@ -53,8 +53,18 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         connect_timeout: int | None = None,
         connect_attempts: int = 1,
         retry_backoff: float = 0.5,
+        *,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        sslcert: str | None = None,
+        sslkey: str | None = None,
     ) -> None:
         """Initialize the connector.
+
+        TLS options mirror libpq's own parameter names. An unset option
+        (``None``) is omitted from the driver call entirely, so libpq's
+        defaults — including its standard environment variables
+        (``PGSSLMODE``, ``PGSSLROOTCERT``, …) — keep applying.
 
         Args:
             host: Server hostname or IP address.
@@ -70,6 +80,11 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
                 means no retry.
             retry_backoff: Delay before the second attempt, in seconds;
                 doubles after each subsequent failure.
+            sslmode: libpq TLS mode (e.g. ``require``, ``verify-full``).
+            sslrootcert: Path to the CA certificate file used to verify
+                the server.
+            sslcert: Path to the client certificate file.
+            sslkey: Path to the client private key file.
 
         Raises:
             ImportError: If the ``psycopg`` driver is not installed
@@ -92,6 +107,10 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
         self._connect_timeout = connect_timeout
         self._connect_attempts = connect_attempts
         self._retry_backoff = retry_backoff
+        self._sslmode = sslmode
+        self._sslrootcert = sslrootcert
+        self._sslcert = sslcert
+        self._sslkey = sslkey
 
     def connect(self) -> None:
         """Establish the connection, retrying transient failures.
@@ -130,8 +149,19 @@ class PostgresConnector(ConnectionBase["psycopg.Connection[tuple[Any, ...]]"]):
             "password": self._password,
             "autocommit": True,
         }
-        if self._connect_timeout is not None:
-            kwargs["connect_timeout"] = self._connect_timeout
+        kwargs.update(
+            {
+                key: value
+                for key, value in (
+                    ("connect_timeout", self._connect_timeout),
+                    ("sslmode", self._sslmode),
+                    ("sslrootcert", self._sslrootcert),
+                    ("sslcert", self._sslcert),
+                    ("sslkey", self._sslkey),
+                )
+                if value is not None
+            }
+        )
         return psycopg.connect(**kwargs)
 
     def close(self) -> None:

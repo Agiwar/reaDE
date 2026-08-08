@@ -193,11 +193,16 @@ with PostgresConnector(
   PostgreSQL: libpq otherwise waits indefinitely). Statement execution
   and `ping()` are never retried: retrying writes repeats non-idempotent
   work, and a health check that retries stops being a measurement.
-- **Known limitations (v0.1.x):** no TLS or charset parameters yet — a
-  scheduled follow-up. Interim, PostgreSQL honors libpq's standard
+- **TLS and charset are explicit connection options.** Option names
+  mirror each driver's own vocabulary — PostgreSQL takes `sslmode`,
+  `sslrootcert`, `sslcert`, and `sslkey`; MySQL takes `charset`,
+  `ssl_ca`, `ssl_cert`, `ssl_key`, `ssl_verify_cert`, and
+  `ssl_verify_identity` — with matching fields on the config models.
+  An unset option is omitted from the driver call entirely, so driver
+  defaults apply; PostgreSQL keeps honoring libpq's standard
   [environment variables](https://www.postgresql.org/docs/current/libpq-envars.html)
-  (`PGSSLMODE`, `PGSSLROOTCERT`, …) for any parameter the connector does
-  not set explicitly; MySQL over TLS is not yet reachable.
+  (`PGSSLMODE`, `PGSSLROOTCERT`, …) for any parameter not set
+  explicitly.
 - The `postgres` extra pins `psycopg[binary]` (bundled libpq) so the
   install works without system PostgreSQL libraries; the trade-off is
   that libpq security updates arrive with psycopg releases rather than
