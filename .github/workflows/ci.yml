@@ -75,8 +75,8 @@ jobs:
       - name: Tests (pytest)
         run: make test
 
-      - name: Integration tests ran (not skipped)
-        run: set -o pipefail && uv run pytest -m integration -rs | grep -E "[1-9][0-9]* passed"
+      - name: Integration tests ran (zero skipped)
+        run: set -o pipefail && uv run pytest -m integration -rs | grep -E "[1-9][0-9]* passed" | grep -v skipped
 
       - name: End-to-end example
         run: uv run python examples/end_to_end.py
@@ -95,6 +95,9 @@ jobs:
 
       - name: Dq-dimensions example
         run: uv run python examples/dq_dimensions.py
+
+      - name: Connection-ergonomics example
+        run: uv run python examples/connection_ergonomics.py
 
       - name: Config module coverage gate (>=90%)
         run: uv run pytest --cov=reade.config --cov-fail-under=90 -q

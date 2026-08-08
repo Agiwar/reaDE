@@ -67,17 +67,19 @@ requires_mysql_ssl_ca = pytest.mark.skipif(
 )
 
 
-def _postgres() -> PostgresConnector:
+def _postgres(**overrides: Any) -> PostgresConnector:
     assert POSTGRES_HOST is not None
-    return PostgresConnector(
-        host=POSTGRES_HOST,
-        database="reade",
-        user="reade",
-        password="reade",  # pragma: allowlist secret
-        port=int(os.environ.get("READE_TEST_POSTGRES_PORT", "5432")),
-        connect_timeout=5,
-        connect_attempts=3,
-    )
+    kwargs: dict[str, Any] = {
+        "host": POSTGRES_HOST,
+        "database": "reade",
+        "user": "reade",
+        "password": "reade",  # pragma: allowlist secret
+        "port": int(os.environ.get("READE_TEST_POSTGRES_PORT", "5432")),
+        "connect_timeout": 5,
+        "connect_attempts": 3,
+    }
+    kwargs.update(overrides)
+    return PostgresConnector(**kwargs)
 
 
 def _mysql(**overrides: Any) -> MysqlConnector:
@@ -309,16 +311,23 @@ class TestDelayRule:
 
 
 class TestTls:
-    """The 4.2 TLS options against the dockerized MySQL server.
+    """The 4.2 TLS options on the wire.
 
-    MySQL 8 auto-generates server certificates at initialization, so the
-    stock container negotiates TLS with no fixture provisioning; the
-    verified leg only needs the auto-generated CA copied out of the
-    container (CI does this in a workflow step). pymysql attempts
-    opportunistic TLS even with no options set, so the discriminating
-    assertions are about verification: a verified session using the CA,
-    and a loud handshake failure when verification is required against
-    a CA the client does not trust.
+    MySQL (mysql:8.4 auto-generates server certificates, so the stock
+    container negotiates TLS with no fixture provisioning; the verified
+    leg needs only the auto-generated CA copied out — CI does this in a
+    workflow step): pymysql attempts opportunistic TLS even with no
+    options set, so the discriminating assertions are about
+    verification — a verified session using the CA, and a loud
+    handshake failure when verification is required against a CA the
+    client does not trust.
+
+    PostgreSQL (stock postgres:16 ships ssl = off): conninfo
+    ACCEPTANCE — libpq parses every conninfo keyword before acting on
+    any, so a successful connect with all options set proves the
+    shipped names are real libpq vocabulary — plus a required-TLS
+    control against the non-TLS server. Negotiation posture stays
+    declared, per the ruled hybrid.
     """
 
     @requires_mysql
@@ -344,6 +353,43 @@ class TestTls:
         # auto-generated certificate — the handshake must fail loudly,
         # proving the forwarded option governs real verification.
         connector = _mysql(ssl_verify_cert=True, connect_attempts=1)
+
+        with pytest.raises(DbError) as exc_info:
+            connector.connect()
+
+        assert exc_info.value.__cause__ is not None
+        assert not connector.is_connected()
+
+    @requires_postgres
+    def test_postgres_conninfo_accepts_all_shipped_tls_options(self) -> None:
+        # Acceptance, not negotiation: sslmode="disable" never opens
+        # TLS, but libpq parses every conninfo keyword before acting on
+        # any — a successful connect proves all four shipped option
+        # names are real libpq vocabulary (a typo would fail here, not
+        # in a user's production connect). The cert files are never
+        # opened under disable, so dummy paths are safe.
+        connector = _postgres(
+            sslmode="disable",
+            sslrootcert="/nonexistent/ca.pem",
+            sslcert="/nonexistent/client.pem",
+            sslkey="/nonexistent/client.key",
+        )
+
+        with connector:
+            assert connector.ping()
+
+    @requires_postgres
+    def test_postgres_tls_required_fails_against_non_tls_server(self) -> None:
+        # Positive control: the same server accepts a plain connection,
+        # so the failure below is attributable to the TLS requirement,
+        # not availability.
+        with _postgres() as control:
+            assert control.is_connected()
+
+        # The stock postgres:16 container ships ssl = off, so
+        # sslmode="require" must fail the handshake loudly — proving
+        # the forwarded option governs real connection behavior.
+        connector = _postgres(sslmode="require", connect_attempts=1)
 
         with pytest.raises(DbError) as exc_info:
             connector.connect()

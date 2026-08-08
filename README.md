@@ -106,6 +106,9 @@ the classification rubric. The surface is machine-pinned by a snapshot
 test: changing any public signature or class member fails CI until the
 change ships with a design-review note. Protocol member parameters
 (`evaluate` / `assess` / `load` / `execute`) are positional-only.
+Sprint 4.2's additive surface (TLS/charset options, the `uri` input)
+froze through its own design-review notes — recorded as the delta
+section of the walk record.
 
 
 ## Configuration
