@@ -13,6 +13,13 @@ Setup: start the services and export the host variables —
     export READE_TEST_MYSQL_HOST=127.0.0.1
     uv run pytest -m integration
 
+The verified-TLS leg additionally needs the MySQL container's
+auto-generated CA copied out —
+
+    docker compose -f tests/integration/compose.yaml \
+        cp mysql:/var/lib/mysql/ca.pem /tmp/mysql-ca.pem
+    export READE_TEST_MYSQL_SSL_CA=/tmp/mysql-ca.pem
+
 Each backend's tests skip with a clear reason when its variable is
 absent, so the default ``make test`` stays zero-setup. CI sets both
 variables and runs against service containers on every push — the gate
@@ -41,6 +48,7 @@ pytestmark = pytest.mark.integration
 
 POSTGRES_HOST = os.environ.get("READE_TEST_POSTGRES_HOST")
 MYSQL_HOST = os.environ.get("READE_TEST_MYSQL_HOST")
+MYSQL_SSL_CA = os.environ.get("READE_TEST_MYSQL_SSL_CA")
 
 requires_postgres = pytest.mark.skipif(
     POSTGRES_HOST is None,
@@ -49,6 +57,13 @@ requires_postgres = pytest.mark.skipif(
 requires_mysql = pytest.mark.skipif(
     MYSQL_HOST is None,
     reason="READE_TEST_MYSQL_HOST not set; start tests/integration/compose.yaml",
+)
+requires_mysql_ssl_ca = pytest.mark.skipif(
+    MYSQL_SSL_CA is None,
+    reason=(
+        "READE_TEST_MYSQL_SSL_CA not set; copy the container's "
+        "auto-generated CA out (see the module docstring)"
+    ),
 )
 
 
@@ -65,17 +80,19 @@ def _postgres() -> PostgresConnector:
     )
 
 
-def _mysql() -> MysqlConnector:
+def _mysql(**overrides: Any) -> MysqlConnector:
     assert MYSQL_HOST is not None
-    return MysqlConnector(
-        host=MYSQL_HOST,
-        database="reade",
-        user="reade",
-        password="reade",  # pragma: allowlist secret
-        port=int(os.environ.get("READE_TEST_MYSQL_PORT", "3306")),
-        connect_timeout=5,
-        connect_attempts=3,
-    )
+    kwargs: dict[str, Any] = {
+        "host": MYSQL_HOST,
+        "database": "reade",
+        "user": "reade",
+        "password": "reade",  # pragma: allowlist secret
+        "port": int(os.environ.get("READE_TEST_MYSQL_PORT", "3306")),
+        "connect_timeout": 5,
+        "connect_attempts": 3,
+    }
+    kwargs.update(overrides)
+    return MysqlConnector(**kwargs)
 
 
 BACKENDS = [
@@ -289,6 +306,50 @@ class TestDelayRule:
                     ).evaluate(connector)
             finally:
                 connector.execute("DROP TABLE IF EXISTS reade_it_delay_empty")
+
+
+class TestTls:
+    """The 4.2 TLS options against the dockerized MySQL server.
+
+    MySQL 8 auto-generates server certificates at initialization, so the
+    stock container negotiates TLS with no fixture provisioning; the
+    verified leg only needs the auto-generated CA copied out of the
+    container (CI does this in a workflow step). pymysql attempts
+    opportunistic TLS even with no options set, so the discriminating
+    assertions are about verification: a verified session using the CA,
+    and a loud handshake failure when verification is required against
+    a CA the client does not trust.
+    """
+
+    @requires_mysql
+    @requires_mysql_ssl_ca
+    def test_mysql_verified_tls_session_with_shipped_options(self) -> None:
+        with _mysql(ssl_ca=MYSQL_SSL_CA, ssl_verify_cert=True) as connector:
+            rows = connector.execute("SHOW STATUS LIKE 'Ssl_cipher'")
+
+        assert rows, "session status query returned nothing"
+        assert rows[0][1] != "", "TLS was not negotiated (empty Ssl_cipher)"
+
+    @requires_mysql
+    def test_mysql_tls_verification_enforced_without_trusted_ca(self) -> None:
+        # Positive control: the same server accepts a plain connection,
+        # so the failure below is attributable to certificate
+        # verification, not availability — without it, this test's
+        # assertions cannot tell a rejected handshake from a down server.
+        with _mysql() as control:
+            assert control.is_connected()
+
+        # ssl_verify_cert=True with no CA verifies against the system
+        # trust store, which cannot vouch for the container's
+        # auto-generated certificate — the handshake must fail loudly,
+        # proving the forwarded option governs real verification.
+        connector = _mysql(ssl_verify_cert=True, connect_attempts=1)
+
+        with pytest.raises(DbError) as exc_info:
+            connector.connect()
+
+        assert exc_info.value.__cause__ is not None
+        assert not connector.is_connected()
 
 
 class TestConnectFailure:

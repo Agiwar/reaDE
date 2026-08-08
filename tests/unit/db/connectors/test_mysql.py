@@ -138,6 +138,63 @@ class TestConnect:
         assert fake_pymysql.connect_kwargs is not None
         assert fake_pymysql.connect_kwargs["port"] == 3307
 
+
+class TestConnectionOptions:
+    def test_charset_and_tls_options_forwarded_verbatim_when_set(
+        self, fake_pymysql: FakePymysql
+    ) -> None:
+        connector = MysqlConnector(
+            host="h",
+            database="d",
+            user="u",
+            password="p",
+            charset="utf8mb4",
+            ssl_ca="/certs/ca.pem",
+            ssl_cert="/certs/client.pem",
+            ssl_key="/certs/client.key",
+            ssl_verify_cert=True,
+            ssl_verify_identity=True,
+        )
+        connector.connect()
+
+        assert fake_pymysql.connect_kwargs is not None
+        assert fake_pymysql.connect_kwargs["charset"] == "utf8mb4"
+        assert fake_pymysql.connect_kwargs["ssl_ca"] == "/certs/ca.pem"
+        assert fake_pymysql.connect_kwargs["ssl_cert"] == "/certs/client.pem"
+        assert fake_pymysql.connect_kwargs["ssl_key"] == "/certs/client.key"
+        assert fake_pymysql.connect_kwargs["ssl_verify_cert"] is True
+        assert fake_pymysql.connect_kwargs["ssl_verify_identity"] is True
+
+    def test_unset_options_are_omitted_from_driver_kwargs(
+        self, connector: MysqlConnector, fake_pymysql: FakePymysql
+    ) -> None:
+        # The byte-identical guarantee: an unset option is omitted from
+        # the driver call entirely, never passed as None.
+        connector.connect()
+
+        assert fake_pymysql.connect_kwargs is not None
+        assert {
+            "charset",
+            "ssl_ca",
+            "ssl_cert",
+            "ssl_key",
+            "ssl_verify_cert",
+            "ssl_verify_identity",
+        }.isdisjoint(fake_pymysql.connect_kwargs)
+
+    def test_explicit_false_bool_option_is_forwarded_not_omitted(
+        self, fake_pymysql: FakePymysql
+    ) -> None:
+        # None means omitted; an explicit False is a real driver value —
+        # the omit-vs-False distinction the option contract states.
+        connector = MysqlConnector(
+            host="h", database="d", user="u", password="p", ssl_verify_cert=False
+        )
+        connector.connect()
+
+        assert fake_pymysql.connect_kwargs is not None
+        assert fake_pymysql.connect_kwargs["ssl_verify_cert"] is False
+
     def test_connect_when_already_connected_is_a_noop(
         self, connector: MysqlConnector, fake_pymysql: FakePymysql
     ) -> None:

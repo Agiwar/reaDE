@@ -26,7 +26,7 @@
       "env_prefix": "'MYSQL'"
     },
     "model_config": "{'extra': 'forbid'}",
-    "signature": "(*, host: str, database: str, user: str, password: str, port: int = 3306, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None"
+    "signature": "(*, host: str, database: str, user: str, password: str, port: int = 3306, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5, charset: str | None = None, ssl_ca: str | None = None, ssl_cert: str | None = None, ssl_key: str | None = None, ssl_verify_cert: bool | None = None, ssl_verify_identity: bool | None = None) -> None"
   },
   "reade.config.PostgresConfig": {
     "bases": [
@@ -36,7 +36,7 @@
       "env_prefix": "'POSTGRES'"
     },
     "model_config": "{'extra': 'forbid'}",
-    "signature": "(*, host: str, database: str, user: str, password: str, port: int = 5432, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None"
+    "signature": "(*, host: str, database: str, user: str, password: str, port: int = 5432, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5, sslmode: str | None = None, sslrootcert: str | None = None, sslcert: str | None = None, sslkey: str | None = None) -> None"
   },
   "reade.config.SqliteConfig": {
     "bases": [
@@ -212,7 +212,7 @@
       "reade.core.base.connector.ConnectionBase"
     ],
     "members": {
-      "__init__": "(self, host: str, database: str, user: str, password: str, port: int = 3306, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None",
+      "__init__": "(self, host: str, database: str, user: str, password: str, port: int = 3306, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5, *, charset: str | None = None, ssl_ca: str | None = None, ssl_cert: str | None = None, ssl_key: str | None = None, ssl_verify_cert: bool | None = None, ssl_verify_identity: bool | None = None) -> None",
       "close": "(self) -> None",
       "connect": "(self) -> None",
       "db_type": "<DbType.MYSQL: 'mysql'>",
@@ -229,7 +229,7 @@
       "reade.core.base.connector.ConnectionBase"
     ],
     "members": {
-      "__init__": "(self, host: str, database: str, user: str, password: str, port: int = 5432, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5) -> None",
+      "__init__": "(self, host: str, database: str, user: str, password: str, port: int = 5432, connect_timeout: int | None = None, connect_attempts: int = 1, retry_backoff: float = 0.5, *, sslmode: str | None = None, sslrootcert: str | None = None, sslcert: str | None = None, sslkey: str | None = None) -> None",
       "close": "(self) -> None",
       "connect": "(self) -> None",
       "db_type": "<DbType.POSTGRESQL: 'postgresql'>",

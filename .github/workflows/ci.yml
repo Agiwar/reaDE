@@ -67,6 +67,11 @@ jobs:
       - name: Import contracts (import-linter)
         run: make imports
 
+      - name: Extract MySQL auto-generated CA (verified-TLS wire leg)
+        run: |
+          docker cp "${{ job.services.mysql.id }}:/var/lib/mysql/ca.pem" /tmp/mysql-ca.pem
+          echo "READE_TEST_MYSQL_SSL_CA=/tmp/mysql-ca.pem" >> "$GITHUB_ENV"
+
       - name: Tests (pytest)
         run: make test
 
