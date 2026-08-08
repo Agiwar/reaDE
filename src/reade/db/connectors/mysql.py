@@ -91,7 +91,9 @@ class MysqlConnector(ConnectionBase["pymysql.connections.Connection[Any]"]):
                 CA. ``False`` disables verification (forwarded, not
                 omitted).
             ssl_verify_identity: Also verify that the server hostname
-                matches the certificate.
+                matches the certificate. Effective only together with
+                ``ssl_ca`` — without a CA, pymysql forces hostname
+                checking off, so this option alone is a silent no-op.
 
         Raises:
             ImportError: If the ``pymysql`` driver is not installed

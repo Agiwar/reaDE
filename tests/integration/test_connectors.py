@@ -80,17 +80,19 @@ def _postgres() -> PostgresConnector:
     )
 
 
-def _mysql() -> MysqlConnector:
+def _mysql(**overrides: Any) -> MysqlConnector:
     assert MYSQL_HOST is not None
-    return MysqlConnector(
-        host=MYSQL_HOST,
-        database="reade",
-        user="reade",
-        password="reade",  # pragma: allowlist secret
-        port=int(os.environ.get("READE_TEST_MYSQL_PORT", "3306")),
-        connect_timeout=5,
-        connect_attempts=3,
-    )
+    kwargs: dict[str, Any] = {
+        "host": MYSQL_HOST,
+        "database": "reade",
+        "user": "reade",
+        "password": "reade",  # pragma: allowlist secret
+        "port": int(os.environ.get("READE_TEST_MYSQL_PORT", "3306")),
+        "connect_timeout": 5,
+        "connect_attempts": 3,
+    }
+    kwargs.update(overrides)
+    return MysqlConnector(**kwargs)
 
 
 BACKENDS = [
@@ -322,19 +324,7 @@ class TestTls:
     @requires_mysql
     @requires_mysql_ssl_ca
     def test_mysql_verified_tls_session_with_shipped_options(self) -> None:
-        assert MYSQL_HOST is not None
-        connector = MysqlConnector(
-            host=MYSQL_HOST,
-            database="reade",
-            user="reade",
-            password="reade",  # pragma: allowlist secret
-            port=int(os.environ.get("READE_TEST_MYSQL_PORT", "3306")),
-            connect_timeout=5,
-            connect_attempts=3,
-            ssl_ca=MYSQL_SSL_CA,
-            ssl_verify_cert=True,
-        )
-        with connector:
+        with _mysql(ssl_ca=MYSQL_SSL_CA, ssl_verify_cert=True) as connector:
             rows = connector.execute("SHOW STATUS LIKE 'Ssl_cipher'")
 
         assert rows, "session status query returned nothing"
@@ -342,20 +332,18 @@ class TestTls:
 
     @requires_mysql
     def test_mysql_tls_verification_enforced_without_trusted_ca(self) -> None:
+        # Positive control: the same server accepts a plain connection,
+        # so the failure below is attributable to certificate
+        # verification, not availability — without it, this test's
+        # assertions cannot tell a rejected handshake from a down server.
+        with _mysql() as control:
+            assert control.is_connected()
+
         # ssl_verify_cert=True with no CA verifies against the system
         # trust store, which cannot vouch for the container's
         # auto-generated certificate — the handshake must fail loudly,
         # proving the forwarded option governs real verification.
-        assert MYSQL_HOST is not None
-        connector = MysqlConnector(
-            host=MYSQL_HOST,
-            database="reade",
-            user="reade",
-            password="reade",  # pragma: allowlist secret
-            port=int(os.environ.get("READE_TEST_MYSQL_PORT", "3306")),
-            connect_timeout=5,
-            ssl_verify_cert=True,
-        )
+        connector = _mysql(ssl_verify_cert=True, connect_attempts=1)
 
         with pytest.raises(DbError) as exc_info:
             connector.connect()

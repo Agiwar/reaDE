@@ -123,6 +123,8 @@ class MysqlConfig(BaseModel):
             ``False`` disables verification (forwarded, not omitted).
         ssl_verify_identity: Also verify that the server hostname
             matches the certificate; ``None`` omits the option.
+            Effective only together with ``ssl_ca`` — without a CA,
+            pymysql forces hostname checking off.
 
     Stability: stable.
     """
