@@ -2,7 +2,10 @@
 
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from reade.config._uri import expand_uri
+from reade.core.enums.db_type import DbType
 
 
 class SqliteConfig(BaseModel):
@@ -18,6 +21,16 @@ class SqliteConfig(BaseModel):
     share one process environment. Unknown fields, from the file or from
     within the prefix, are rejected with a field path.
 
+    URI input: a ``uri`` key — in the file or as ``READE__SQLITE__URI``
+    — expands before validation into ``database``
+    (``sqlite:///path.db``; ``sqlite:////abs/path.db`` for absolute
+    paths; ``sqlite:///:memory:`` works). Setting ``uri`` together with
+    ``database`` raises ``ConfigError``; sqlite URIs take no host and
+    no query parameters. The model never retains the URI string, and
+    typed callers pass ``uri`` in the input mapping (``model_validate``,
+    file, or env) — the synthesized constructor signature knows only
+    real fields.
+
     Attributes:
         database: Path to the SQLite database file, or ``:memory:``.
 
@@ -29,6 +42,14 @@ class SqliteConfig(BaseModel):
     env_prefix: ClassVar[str] = "SQLITE"
 
     database: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _expand_uri(cls, data: object) -> object:
+        """Expand a ``uri`` input key before field validation."""
+        if isinstance(data, dict):
+            return expand_uri(data, db_type=DbType.SQLITE)
+        return data
 
 
 class PostgresConfig(BaseModel):
@@ -44,6 +65,20 @@ class PostgresConfig(BaseModel):
     ``READE__*`` ones — are ignored. Scoping is what lets several models
     share one process environment. Unknown fields, from the file or from
     within the prefix, are rejected with a field path.
+
+    URI input: a ``uri`` key — in the file or as
+    ``READE__POSTGRES__URI`` — expands before validation into ``host``,
+    ``port``, ``user``, ``password``, and ``database`` (``postgresql://``
+    followed by ``user:password@host:port/database``; credentials
+    percent-decoded; port optional, defaulting like the field). Setting
+    ``uri`` together with any of those keys raises ``ConfigError``,
+    while option fields compose beside a URI. Allowlisted query
+    parameters map onto this model's option fields (``sslmode``,
+    ``sslrootcert``, ``sslcert``, ``sslkey``); unknown keys are
+    rejected. The model never retains the URI string, and typed callers
+    pass ``uri`` in the input mapping (``model_validate``, file, or
+    env) — the synthesized constructor signature knows only real
+    fields.
 
     Attributes:
         host: Server hostname or IP address.
@@ -85,6 +120,14 @@ class PostgresConfig(BaseModel):
     sslcert: str | None = None
     sslkey: str | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def _expand_uri(cls, data: object) -> object:
+        """Expand a ``uri`` input key before field validation."""
+        if isinstance(data, dict):
+            return expand_uri(data, db_type=DbType.POSTGRESQL)
+        return data
+
 
 class MysqlConfig(BaseModel):
     """Validated connection configuration for MySQL/MariaDB.
@@ -99,6 +142,20 @@ class MysqlConfig(BaseModel):
     are ignored. Scoping is what lets several models share one process
     environment. Unknown fields, from the file or from within the
     prefix, are rejected with a field path.
+
+    URI input: a ``uri`` key — in the file or as ``READE__MYSQL__URI``
+    — expands before validation into ``host``, ``port``, ``user``,
+    ``password``, and ``database`` (``mysql://`` followed by
+    ``user:password@host:port/database``; credentials percent-decoded;
+    port optional, defaulting like the field). Setting ``uri`` together
+    with any of those keys raises ``ConfigError``, while option fields
+    compose beside a URI. Allowlisted query parameters map onto this
+    model's option fields (``charset``, ``ssl_ca``, ``ssl_cert``,
+    ``ssl_key``, ``ssl_verify_cert``, ``ssl_verify_identity``); unknown
+    keys are rejected. The model never retains the URI string, and
+    typed callers pass ``uri`` in the input mapping (``model_validate``,
+    file, or env) — the synthesized constructor signature knows only
+    real fields.
 
     Attributes:
         host: Server hostname or IP address.
@@ -147,3 +204,11 @@ class MysqlConfig(BaseModel):
     ssl_key: str | None = None
     ssl_verify_cert: bool | None = None
     ssl_verify_identity: bool | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _expand_uri(cls, data: object) -> object:
+        """Expand a ``uri`` input key before field validation."""
+        if isinstance(data, dict):
+            return expand_uri(data, db_type=DbType.MYSQL)
+        return data

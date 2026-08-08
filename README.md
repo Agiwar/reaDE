@@ -152,6 +152,23 @@ with SqliteConnector(database=config.database) as connector:
   loudly with a field path — unknown fields are rejected. Pass
   `environ={}` to disable overrides for a call, or a filtered mapping
   to substitute the process environment.
+- **Connection URIs:** a `uri` key — in the file or as an env override
+  (`READE__POSTGRES__URI=postgresql://user:password@host:5432/db`) — <!-- pragma: allowlist secret -->
+  expands at validation into `host`, `port`, `user`, `password`, and
+  `database`; credentials are percent-decoded, and `sqlite:///path.db`
+  covers SQLite. Plain schemes only. Setting `uri` together with any
+  of those five keys fails loudly; option fields (TLS, charset, retry
+  knobs) compose beside a URI, and allowlisted query parameters
+  (`?sslmode=require`, `?charset=utf8mb4`) land in the same option
+  fields — unknown keys are rejected. The model never retains the URI
+  string.
+- **Passwords in URIs** travel wherever the URI goes — process
+  listings, shell history, deploy logs. Prefer the deploy-time env
+  override to a URI committed in a file, or keep the password out of
+  the URI entirely by using the separate fields. Percent-encode
+  reserved characters in credentials (`@` → `%40`); reaDE decodes
+  them. Expansion never retains or echoes the URI: validation errors
+  name components and keys, never values.
 - **Validation failures** raise reaDE's own `ConfigError` carrying the
   field-path report; `ConfigLoader.load(path)` remains the untyped
   dict layer underneath.
@@ -203,6 +220,9 @@ with PostgresConnector(
   [environment variables](https://www.postgresql.org/docs/current/libpq-envars.html)
   (`PGSSLMODE`, `PGSSLROOTCERT`, …) for any parameter not set
   explicitly.
+- Connection URIs are a config-layer input: the `uri` key expands into
+  these connector parameters before validation — see Configuration for
+  the form and the password-in-URI trade-offs.
 - The `postgres` extra pins `psycopg[binary]` (bundled libpq) so the
   install works without system PostgreSQL libraries; the trade-off is
   that libpq security updates arrive with psycopg releases rather than
