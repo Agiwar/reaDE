@@ -19,7 +19,8 @@ class DbMetadata:
         display_name: Human-readable name.
         default_port: Default connection port (None for file-based DBs).
         default_driver: Default Python driver package.
-        uri_scheme: SQLAlchemy URI scheme.
+        uri_scheme: Plain connection-URI scheme; the scheme→backend
+            anchor for URI-style config input.
 
     Stability: stable.
     """
@@ -46,14 +47,14 @@ DB_METADATA_REGISTRY: Mapping[DbType, DbMetadata] = MappingProxyType(
             display_name="MySQL",
             default_port=3306,
             default_driver="pymysql",
-            uri_scheme="mysql+pymysql",
+            uri_scheme="mysql",
         ),
         DbType.POSTGRESQL: DbMetadata(
             db_type=DbType.POSTGRESQL,
             display_name="PostgreSQL",
             default_port=5432,
             default_driver="psycopg",
-            uri_scheme="postgresql+psycopg",
+            uri_scheme="postgresql",
         ),
     }
 )
