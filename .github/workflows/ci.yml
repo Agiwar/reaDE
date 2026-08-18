@@ -99,6 +99,9 @@ jobs:
       - name: Connection-ergonomics example
         run: uv run python examples/connection_ergonomics.py
 
+      - name: Docs build (strict) + fidelity gate
+        run: make docs
+
       - name: Config module coverage gate (>=90%)
         run: uv run pytest --cov=reade.config --cov-fail-under=90 -q
 

@@ -1,0 +1,3 @@
+# `reade.config`
+
+::: reade.config
