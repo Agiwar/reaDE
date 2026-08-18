@@ -178,7 +178,9 @@ with SqliteConnector(database=config.database) as connector:
   dict layer underneath.
 
 See [`examples/config_typed.py`](examples/config_typed.py) for the full
-flow, including a rejected typo'd override.
+flow, including a rejected typo'd override, and
+[`examples/connection_ergonomics.py`](examples/connection_ergonomics.py)
+for the TLS/charset options and the URI input end to end.
 
 ## Database Connections
 
