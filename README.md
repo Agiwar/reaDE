@@ -101,8 +101,10 @@ from reade.dq import CompletenessDimension, VolumeDimension, check
 
 All 44 exported symbols across the 11 public packages are **stable** as
 of the Phase 4 API freeze walk — see
-[`docs/api_freeze.md`](docs/api_freeze.md) for the per-symbol record and
-the classification rubric. The surface is machine-pinned by a snapshot
+[`docs/stability.md`](docs/stability.md) for the per-symbol table
+(cross-checked against the API snapshot by a committed test) and
+[`docs/api_freeze.md`](docs/api_freeze.md) for the walk record and the
+classification rubric. The surface is machine-pinned by a snapshot
 test: changing any public signature or class member fails CI until the
 change ships with a design-review note. Protocol member parameters
 (`evaluate` / `assess` / `load` / `execute`) are positional-only.
