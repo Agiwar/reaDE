@@ -5,7 +5,9 @@ public-API snapshot (`tests/snapshots/public_api.json`) as it stands
 after the freeze-contract changes of PR #48. The pinned surface is
 **44 symbols across 11 packages** — counted mechanically from the
 snapshot's keys, which this record mirrors one-to-one. Each symbol
-also carries a `Stability:` line in its docstring.
+also carries a `Stability:` marker — a docstring line for 43 of the
+44; `DB_METADATA_REGISTRY`'s is a source comment, carried user-facing
+by its row in the [stability table](stability.md).
 
 ## Classification rubric
 

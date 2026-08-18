@@ -40,6 +40,13 @@ dev = [
     # Pre-commit
     "pre-commit",
     "import-linter>=2.13",
+    # Docs (strict build-gate only; exactly the ruled tooling set)
+    "mkdocs>=1.6",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    # Ruled escalation: pydantic constructor signatures are invisible to
+    # static analysis without it (models rendered with no signature)
+    "griffe-pydantic",
 ]
 
 [project.urls]

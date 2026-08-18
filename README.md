@@ -525,7 +525,13 @@ make lint          # Run ruff linter
 make type-check    # Run mypy
 make test          # Run tests
 make check-all     # Run all checks
+make docs          # Build the API reference (strict) into site/
 ```
+
+`make docs` renders the per-symbol API reference from the docstrings —
+the docstrings are the contract — into `site/` (untracked); browse it
+live with `uv run mkdocs serve`. The per-symbol stability table for the
+frozen surface is committed at [docs/stability.md](docs/stability.md).
 
 ## License
 

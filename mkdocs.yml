@@ -1,0 +1,64 @@
+site_name: reaDE API reference
+site_description: >-
+  Data Engineering SDK with built-in Data Quality — per-symbol reference
+  for the frozen v0.3.0 surface.
+repo_url: https://github.com/Agiwar/reaDE
+edit_uri: ""
+use_directory_urls: false
+
+theme:
+  name: material
+
+# Patterns are gitignore-format, relative to docs_dir; the leading slash
+# anchors at docs_dir, so this is the spelling that actually excludes
+# the internal tree (a docs_dir-prefixed spelling would match nothing).
+exclude_docs: |
+  /internal/
+
+# These checks default to info; --strict only fails on warnings.
+validation:
+  nav:
+    omitted_files: warn
+    absolute_links: warn
+  links:
+    absolute_links: warn
+    anchors: warn
+    unrecognized_links: warn
+
+plugins:
+  - search
+  - mkdocstrings:
+      # Carries the signature.html.jinja override (trailing
+      # positional-only separator); see the file's header.
+      custom_templates: docs_templates
+      handlers:
+        python:
+          options:
+            extensions:
+              - griffe_pydantic
+            docstring_style: google
+            show_source: false
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            show_root_heading: false
+            show_root_toc_entry: false
+            show_if_no_docstring: true
+            filters: ["!^_"]
+
+nav:
+  - Overview: index.md
+  - Reference:
+      - reade.config: reference/config.md
+      - reade.core.base: reference/core-base.md
+      - reade.core.enums: reference/core-enums.md
+      - reade.core.errors: reference/core-errors.md
+      - reade.core.interfaces: reference/core-interfaces.md
+      - reade.core.models: reference/core-models.md
+      - reade.data_io: reference/data-io.md
+      - reade.db: reference/db.md
+      - reade.dq: reference/dq.md
+      - reade.sql: reference/sql.md
+      - reade.validation: reference/validation.md
+  - Stability table: stability.md
+  - Freeze record: api_freeze.md

@@ -1,4 +1,4 @@
-.PHONY: help h install dev-install lint lint-fix format type-check security imports test test-cov check-all pre-commit build publish-test publish clean tree
+.PHONY: help h install dev-install lint lint-fix format type-check security imports test test-cov check-all pre-commit docs build publish-test publish clean tree
 
 # Colors for terminal output
 BLUE := \033[0;34m
@@ -66,6 +66,31 @@ check-all: lint type-check security imports test-cov ## Run all checks (lint, ty
 pre-commit: ## Run pre-commit hooks on all files
 	@echo "$(BLUE)Running pre-commit hooks...$(NC)"
 	uv run pre-commit run --all-files
+
+# ==================== Docs ====================
+
+# Containment checks derive their targets at runtime from docs/internal
+# (never a committed literal); the trailing-separator grep is the
+# fidelity canary for the signature-template override in docs_templates/.
+docs: ## Build the API reference (strict) + containment and fidelity gates
+	@echo "$(BLUE)Building API reference (strict)...$(NC)"
+	uv run mkdocs build --strict
+	@test ! -e site/internal || { echo "FAIL: site/internal exists — the internal tree leaked into the build"; exit 1; }
+	@if [ -d docs/internal ]; then \
+		for f in docs/internal/*.md; do \
+			[ -e "$$f" ] || continue; \
+			probe=$$(sed -n '1s/^#* *//p' "$$f"); \
+			name=$$(basename "$$f" .md); \
+			if [ -n "$$probe" ] && grep -rqF "$$probe" site/; then \
+				echo "FAIL: internal content (first line of $$f) found in site/"; exit 1; \
+			fi; \
+			if grep -rqF "$$name" site/; then \
+				echo "FAIL: internal filename $$name referenced in site/"; exit 1; \
+			fi; \
+		done; \
+	fi
+	@sed 's/<[^>]*>/ /g' site/reference/core-interfaces.html | tr -s ' ' | grep -q 'load ( path : Path , / )' || { echo "FAIL: positional-only marker missing from the rendered signature — the template override drifted (see docs_templates/)"; exit 1; }
+	@echo "$(GREEN)Docs built strict-clean; containment and fidelity checks passed$(NC)"
 
 # ==================== Build & Release ====================
 

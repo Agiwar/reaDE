@@ -1,0 +1,3 @@
+# `reade.sql`
+
+::: reade.sql
