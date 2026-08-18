@@ -467,9 +467,62 @@ at the 4.2 kickoff, 2026-08-07)**
   before the first feature branch and green at close, committed at
   closeout.
 
-**Sprint 4.3 — docs (decided at 4.2's close)**
-- API reference; example polish (the example count already exceeds the
-  original target). Full stability table from the 4.1 walk record.
+**Sprint 4.3 — docs (confirmed at 4.2's close; scope and DoD ratified at
+the 4.3 kickoff, 2026-08-18)**
+- Release-readiness documentation on the frozen v0.3.0 surface: a generated
+  API reference, the full stability table, and example polish. Zero
+  public-surface change and zero behavior change — a docs sprint on a
+  44-symbol surface that is already walked and pinned.
+- API reference: generated from docstrings (docstring-first — the reference
+  is single-source with the contract) via mkdocs + mkdocstrings[python] +
+  mkdocs-material in the dev extra only; strict-mode build with the MkDocs
+  validation checks raised to warn; the built site stays untracked.
+  Build-gate posture: a `make docs` target plus a step-level CI strict
+  build; no hosting or deployment — outward publication stays behind 4.4's
+  own trigger. Anti-drift nav: a thin index that links out; no README or
+  ARCHITECTURE prose duplicated into the site. Renderer fidelity is spiked
+  against a pre-declared pass bar (positional-only markers, ClassVar,
+  keyword-only pydantic signatures, Protocol members, trailing stability
+  lines) before the 11-package fan-out; griffe-pydantic is the only
+  pre-authorized escalation, evidence in the PR; unfaithful rendering is a
+  stop-and-re-card, never hand-edited output or a weakened gate.
+- Internal containment, first-class: the gitignored docs/internal tree is
+  excluded from the build by a verified `exclude_docs` pattern
+  (`/internal/`, relative to docs_dir), pinned by a committed config-assert
+  test; `make docs` additionally fails if internal content reaches the
+  built output, with its check targets derived at runtime, never committed;
+  the exclusion is proven once by a read-only leak control during the
+  spike.
+- Full stability table: a committed markdown page, rendered in the
+  reference and readable on GitHub — all 44 pinned symbols with their walk
+  dispositions including the 4.2 delta, one fixed-format pipe-table row per
+  symbol, the symbol backticked in column one. A committed cross-check
+  test — the sprint's acceptance artifact, written red-first — asserts
+  name-set equality with the public-API snapshot in both directions, count
+  44, and every disposition stable, so a future non-stable row fails loud
+  instead of drifting in. docs/api_freeze.md remains the record, linked
+  from the reference and kept wording-consistent (its marker-form sentence
+  corrected: 43 markers are docstring-form; the registry's comment-form
+  marker is carried by its table row).
+- Example polish, content-only: a fresh current-truth examples/README.md
+  indexing the seven examples, plus a declared consistency pass over them;
+  no new examples and zero behavior change — the existing CI example steps
+  remain the proof.
+- DoD: docs build strict-clean locally (`make docs`) and as a CI step with
+  the containment controls above + stability table landed and its
+  cross-check test green + reference covers all 11 public packages with
+  the docstring-form stability markers rendering + examples README and
+  consistency pass landed with all seven example CI steps green + zero
+  public-surface change: snapshot byte-identical; docstring edits
+  presentation-only and declared per PR (the snapshot pins no docstrings;
+  the docstring guard is the per-PR declaration plus review); any
+  contract-semantics change is a stop condition, not a card + no publish
+  flavor (version untouched; no rc scaffolding; NO TAG at close — Phase
+  4's gate belongs to 4.4, if it runs) + dependency containment (runtime
+  dependencies byte-identical; the three docs tools dev-extra only,
+  locked; anything beyond is a declared escalation) + `make check-all`
+  green at every completion claim, README build/read pointer landed, and
+  this amendment merged.
 
 **Sprint 4.4 — release gate (no default; own decision)**
 - `v1.0.0rc1` on PyPI → soak period → `v1.0.0`, with its preconditions
