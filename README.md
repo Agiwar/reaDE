@@ -68,10 +68,16 @@ source .venv/bin/activate
 
 ## Status
 
-reaDE is pre-alpha, built as a [walking skeleton](DEVELOPMENT_PLAN.md):
-the public API surface in `core/` landed first, then thin implementations
-of the whole chain, then each module hardened in release-gated sprints —
-complete through Phase 3. Phase 4 is release readiness.
+reaDE is **complete as scoped at v0.3.0**, built as a
+[walking skeleton](DEVELOPMENT_PLAN.md): the public API surface in
+`core/` landed first, then thin implementations of the whole chain,
+then each module hardened in release-gated sprints. Phase 4 (release
+readiness) is closed — the 44-symbol surface frozen and walked,
+connection ergonomics shipped, the API reference and stability table
+built and CI-gated. Publishing to PyPI is **deliberately deferred**,
+not abandoned: a published 1.0 is a maintenance promise, and it waits
+for a concrete trigger — a real external consumer — rather than
+momentum.
 
 The entire chain now runs end-to-end against SQLite — see
 [`examples/end_to_end.py`](examples/end_to_end.py):
